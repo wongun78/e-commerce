@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cập nhật trạng thái đơn hàng</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .header {
+        background: #2196f3;
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+      .content {
+        background: #f9f9f9;
+        padding: 20px;
+        border: 1px solid #ddd;
+      }
+      .status-change {
+        background: white;
+        padding: 15px;
+        margin: 15px 0;
+        border-left: 4px solid #2196f3;
+        text-align: center;
+      }
+      .status {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 4px;
+        margin: 0 10px;
+        font-weight: bold;
+      }
+      .old-status {
+        background: #f0f0f0;
+        color: #666;
+        text-decoration: line-through;
+      }
+      .new-status {
+        background: #4caf50;
+        color: white;
+      }
+      .tracking-btn {
+        display: inline-block;
+        background: #2196f3;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 4px;
+        margin: 20px 0;
+      }
+      .footer {
+        text-align: center;
+        color: #666;
+        font-size: 0.9em;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>📬 Cập nhật trạng thái đơn hàng</h1>
+    </div>
+
+    <div class="content">
+      <p>Xin chào <strong th:text="${customerName}">Khách hàng</strong>,</p>
+
+      <p>
+        Đơn hàng <strong th:text="${orderId}">ORD-12345</strong> của bạn đã được
+        cập nhật trạng thái:
+      </p>
+
+      <div class="status-change">
+        <span class="status old-status" th:text="${oldStatus}">PENDING</span>
+        <span>→</span>
+        <span class="status new-status" th:text="${newStatus}">CONFIRMED</span>
+      </div>
+
+      <div style="text-align: center">
+        <a th:href="${trackingLink}" class="tracking-btn"
+          >📦 Xem chi tiết đơn hàng</a
+        >
+      </div>
+
+      <p style="margin-top: 20px">
+        <em>Cảm ơn bạn đã tin tưởng Hung Hypebeast!</em>
+      </p>
+    </div>
+
+    <div class="footer">
+      <p><strong>Hung Hypebeast</strong> - Local Brand Thời Trang</p>
+      <p>Hotline: 1900-xxxx | Email: support@hunghypebeast.com</p>
+    </div>
+  </body>
+</html>

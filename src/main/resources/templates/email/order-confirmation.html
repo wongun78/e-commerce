@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xác nhận đơn hàng</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .header {
+        background: #4caf50;
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+      .content {
+        background: #f9f9f9;
+        padding: 20px;
+        border: 1px solid #ddd;
+      }
+      .order-info {
+        background: white;
+        padding: 15px;
+        margin: 15px 0;
+        border-left: 4px solid #4caf50;
+      }
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+      .items-table th,
+      .items-table td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      .items-table th {
+        background: #f0f0f0;
+      }
+      .total {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #4caf50;
+        text-align: right;
+        padding: 10px 0;
+      }
+      .tracking-btn {
+        display: inline-block;
+        background: #4caf50;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 4px;
+        margin: 20px 0;
+      }
+      .footer {
+        text-align: center;
+        color: #666;
+        font-size: 0.9em;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🎉 Cảm ơn bạn đã đặt hàng!</h1>
+    </div>
+
+    <div class="content">
+      <p>Xin chào <strong th:text="${customerName}">Khách hàng</strong>,</p>
+
+      <p>
+        Chúng tôi đã nhận được đơn hàng của bạn và đang xử lý. Dưới đây là thông
+        tin chi tiết:
+      </p>
+
+      <div class="order-info">
+        <p>
+          <strong>Mã đơn hàng:</strong>
+          <span th:text="${orderId}">ORD-12345</span>
+        </p>
+        <p>
+          <strong>Địa chỉ giao hàng:</strong>
+          <span th:text="${shippingAddress}">123 ABC Street</span>
+        </p>
+        <p>
+          <strong>Phương thức thanh toán:</strong>
+          <span
+            th:text="${paymentMethod == 'COD' ? 'Thu tiền khi giao hàng (COD)' : 'Chuyển khoản'}"
+            >COD</span
+          >
+        </p>
+      </div>
+
+      <h3>Chi tiết đơn hàng:</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Sản phẩm</th>
+            <th>Số lượng</th>
+            <th>Giá</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="item : ${items}">
+            <td>
+              <span th:text="${item.productVariant.product.name}"
+                >Product Name</span
+              ><br />
+              <small
+                th:text="'Size: ' + ${item.productVariant.size} + ', Color: ' + ${item.productVariant.color}"
+                >Size: M, Color: Blue</small
+              >
+            </td>
+            <td th:text="${item.quantity}">2</td>
+            <td
+              th:text="${#numbers.formatDecimal(item.priceAtPurchase, 0, 'COMMA', 0, 'POINT')} + ' đ'"
+            >
+              99,000 đ
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="total">
+        Tổng cộng:
+        <span
+          th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"
+          >199,000 đ</span
+        >
+      </p>
+
+      <div style="text-align: center">
+        <a th:href="${trackingLink}" class="tracking-btn"
+          >📦 Theo dõi đơn hàng</a
+        >
+      </div>
+
+      <p>
+        <strong>Lưu ý:</strong> Bạn có thể theo dõi trạng thái đơn hàng bất kỳ
+        lúc nào bằng cách click vào link trên. <em>Không cần đăng nhập!</em>
+      </p>
+    </div>
+
+    <div class="footer">
+      <p><strong>Hung Hypebeast</strong> - Local Brand Thời Trang</p>
+      <p>Hotline: 1900-xxxx | Email: support@hunghypebeast.com</p>
+      <p style="font-size: 0.8em; color: #999">
+        Email này được gửi tự động, vui lòng không reply.
+      </p>
+    </div>
+  </body>
+</html>
