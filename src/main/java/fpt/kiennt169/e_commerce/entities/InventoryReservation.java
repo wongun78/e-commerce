@@ -9,10 +9,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "inventory_reservations", indexes = {
-        @Index(name = "idx_reservations_variant", columnList = "product_variant_id"),
-        @Index(name = "idx_reservations_session", columnList = "session_id"),
-        @Index(name = "idx_reservations_status", columnList = "status"),
-        @Index(name = "idx_reservations_expiry", columnList = "expiry_time")
+        @Index(name = "idx_reservations_session_status", columnList = "session_id, status"),
+        @Index(name = "idx_reservations_status_expiry", columnList = "status, expiry_time"),
+        @Index(name = "idx_reservations_variant_status", columnList = "product_variant_id, status")
 })
 @Getter
 @Setter

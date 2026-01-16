@@ -10,7 +10,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "product_variants", indexes = {
-        @Index(name = "idx_product_variants_sku", columnList = "sku", unique = true),
         @Index(name = "idx_product_variants_product", columnList = "product_id")
 })
 @Getter
@@ -47,16 +46,8 @@ public class ProductVariant extends BaseEntity {
     @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL)
     @Builder.Default
     private List<InventoryReservation> reservations = new ArrayList<>();
-
-    // === Helper Methods ===
-    // NOTE: Use InventoryService.getAvailableStock(variantId) for accurate available stock
-    // This method only returns raw stock without subtracting reservations
-
+    
     public boolean isInStock() {
         return stockQuantity > 0;
-    }
-
-    public boolean hasStock(int requestedQuantity) {
-        return stockQuantity >= requestedQuantity;
     }
 }

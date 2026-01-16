@@ -11,10 +11,15 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "orders", indexes = {
+@Table(name = "orders", 
+    indexes = {
         @Index(name = "idx_orders_user", columnList = "user_id"),
-        @Index(name = "idx_orders_status", columnList = "status")
-})
+        @Index(name = "idx_orders_status", columnList = "status"),
+        @Index(name = "idx_orders_user_created", columnList = "user_id, created_at"),
+        @Index(name = "idx_orders_status_created", columnList = "status, created_at"),
+        @Index(name = "idx_orders_customer_email_created", columnList = "customer_email, created_at")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -51,12 +56,11 @@ public class Order extends BaseEntity {
     private OrderStatus status = OrderStatus.PENDING;
 
     @Column(name = "payment_method", length = 50)
-    private String paymentMethod; // "COD" or "BANK_TRANSFER"
+    private String paymentMethod; 
 
     @Column(name = "payment_status", length = 50)
     @Builder.Default
-    private String paymentStatus = "PENDING"; // PENDING, PAID, FAILED
-
+    private String paymentStatus = "PENDING"; 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
@@ -73,17 +77,6 @@ public class Order extends BaseEntity {
         item.setOrder(this);
     }
 
-    public void removeItem(OrderItem item) {
-        items.remove(item);
-        item.setOrder(null);
-    }
-
-    public void calculateTotal() {
-        this.totalAmount = items.stream()
-                .map(OrderItem::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
     public int getTotalItems() {
         return items.stream()
                 .mapToInt(OrderItem::getQuantity)
@@ -92,9 +85,5 @@ public class Order extends BaseEntity {
 
     public boolean canCancel() {
         return status == OrderStatus.PENDING || status == OrderStatus.CONFIRMED;
-    }
-
-    public boolean isGuestOrder() {
-        return user == null;
     }
 }
