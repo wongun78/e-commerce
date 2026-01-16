@@ -7,6 +7,7 @@ import fpt.kiennt169.e_commerce.dtos.order.UpdateOrderStatusRequest;
 import fpt.kiennt169.e_commerce.entities.*;
 import fpt.kiennt169.e_commerce.enums.OrderStatus;
 import fpt.kiennt169.e_commerce.exceptions.BadRequestException;
+import fpt.kiennt169.e_commerce.exceptions.ForbiddenException;
 import fpt.kiennt169.e_commerce.exceptions.ResourceNotFoundException;
 import fpt.kiennt169.e_commerce.mappers.OrderMapper;
 import fpt.kiennt169.e_commerce.repositories.*;
@@ -27,10 +28,11 @@ import java.math.BigDecimal;
 @Slf4j
 public class OrderServiceImpl implements OrderService {
 
+    private static final String ORDER_ENTITY = "Order";
+    
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
-    private final ProductVariantRepository variantRepository;
     private final InventoryService inventoryService;
     private final EmailService emailService;
     private final OrderMapper orderMapper;
@@ -66,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
                 .customerPhone(request.getCustomerPhone())
                 .shippingAddress(request.getShippingAddress())
                 .paymentMethod(request.getPaymentMethod())
-                .paymentStatus("COD".equals(request.getPaymentMethod()) ? "PENDING" : "PENDING")
+                .paymentStatus("PENDING")
                 .status(OrderStatus.PENDING)
                 .build();
 
@@ -88,14 +90,11 @@ public class OrderServiceImpl implements OrderService {
 
         order.setTotalAmount(totalAmount);
 
-        // Confirm stock reservation
         String reservationSessionId = request.getReservationId();
         if (reservationSessionId == null) {
-            // Fallback: If no reservation, use session/user ID (backward compatible)
             reservationSessionId = sessionId != null ? sessionId : "user-" + userId;
         }
         
-        // This will deduct stock and mark reservations as completed
         inventoryService.confirmStock(reservationSessionId);
 
         order = orderRepository.save(order);
@@ -103,7 +102,6 @@ public class OrderServiceImpl implements OrderService {
         cart.clearItems();
         cartRepository.save(cart);
 
-        // Send order confirmation email
         try {
             emailService.sendOrderConfirmation(order);
         } catch (Exception e) {
@@ -118,7 +116,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public OrderDTO getOrderById(String orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+                .orElseThrow(() -> new ResourceNotFoundException(ORDER_ENTITY, "id", orderId));
         return orderMapper.toDTO(order);
     }
 
@@ -126,11 +124,10 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public OrderDTO getOrderById(String orderId, Long userId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+                .orElseThrow(() -> new ResourceNotFoundException(ORDER_ENTITY, "id", orderId));
         
-        // Check if user owns this order
         if (userId != null && order.getUser() != null && !order.getUser().getId().equals(userId)) {
-            throw new fpt.kiennt169.e_commerce.exceptions.ForbiddenException("You don't have permission to view this order");
+            throw new ForbiddenException("You don't have permission to view this order");
         }
         
         return orderMapper.toDTO(order);
@@ -154,7 +151,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderDTO updateOrderStatus(String orderId, UpdateOrderStatusRequest request) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+                .orElseThrow(() -> new ResourceNotFoundException(ORDER_ENTITY, "id", orderId));
 
         validateStatusTransition(order.getStatus(), request.getStatus());
 
@@ -164,7 +161,6 @@ public class OrderServiceImpl implements OrderService {
 
         log.info("Order status updated: id={}, status={}", orderId, request.getStatus());
         
-        // Send status update email
         try {
             emailService.sendOrderStatusUpdate(order, oldStatus.name(), request.getStatus().name());
         } catch (Exception e) {
@@ -174,35 +170,11 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDTO(order);
     }
 
-    @Override
-    @Transactional
-    public OrderDTO cancelOrder(String orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
-
-        if (!order.canCancel()) {
-            throw new BadRequestException("Order cannot be cancelled. Current status: " + order.getStatus());
-        }
-
-        for (OrderItem item : order.getItems()) {
-            ProductVariant variant = variantRepository.findByIdWithLock(item.getProductVariant().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("ProductVariant", "id", item.getProductVariant().getId()));
-
-            variant.setStockQuantity(variant.getStockQuantity() + item.getQuantity());
-            variantRepository.save(variant);
-        }
-
-        order.setStatus(OrderStatus.CANCELLED);
-        order = orderRepository.save(order);
-
-        log.info("Order cancelled: id={}", orderId);
-        return orderMapper.toDTO(order);
-    }
-
     private void validateStatusTransition(OrderStatus current, OrderStatus target) {
         boolean valid = switch (current) {
             case PENDING -> target == OrderStatus.CONFIRMED || target == OrderStatus.CANCELLED;
-            case CONFIRMED -> target == OrderStatus.SHIPPED || target == OrderStatus.CANCELLED;
+            case CONFIRMED -> target == OrderStatus.PROCESSING || target == OrderStatus.CANCELLED;
+            case PROCESSING -> target == OrderStatus.SHIPPED || target == OrderStatus.CANCELLED;
             case SHIPPED -> target == OrderStatus.DELIVERED;
             case DELIVERED, CANCELLED -> false;
         };
