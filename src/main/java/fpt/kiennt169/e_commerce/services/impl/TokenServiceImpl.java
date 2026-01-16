@@ -1,5 +1,6 @@
 package fpt.kiennt169.e_commerce.services.impl;
 
+import fpt.kiennt169.e_commerce.entities.User;
 import fpt.kiennt169.e_commerce.repositories.UserRepository;
 import fpt.kiennt169.e_commerce.services.TokenService;
 import io.jsonwebtoken.Claims;
@@ -35,7 +36,7 @@ public class TokenServiceImpl implements TokenService {
     private String jwtSecret;
 
     @Value("${jwt.expiration}")
-    private Long jwtExpirationInMs;
+    private Long jwtExpiration;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
@@ -45,7 +46,7 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public String generateToken(Long userId, String email, Set<String> roles) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
         return Jwts.builder()
                 .subject(userId.toString())
@@ -75,16 +76,6 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public Long getUserIdFromToken(String token) {
-        return Long.parseLong(getClaims(token).getSubject());
-    }
-
-    @Override
-    public String getEmailFromToken(String token) {
-        return getClaims(token).get(CLAIM_EMAIL, String.class);
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
     public Authentication getAuthenticationFromToken(String token) {
         try {
@@ -96,8 +87,7 @@ public class TokenServiceImpl implements TokenService {
                     .map(SimpleGrantedAuthority::new)
                     .toList();
 
-            // Load full User entity from database
-            fpt.kiennt169.e_commerce.entities.User userEntity = userRepository.findByEmail(email)
+            User userEntity = userRepository.findByEmail(email)
                     .orElse(null);
             
             if (userEntity == null) {
