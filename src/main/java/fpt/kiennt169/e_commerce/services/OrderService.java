@@ -35,9 +35,4 @@ public interface OrderService {
      * Update order status
      */
     OrderDTO updateOrderStatus(String orderId, UpdateOrderStatusRequest request);
-
-    /**
-     * Cancel order
-     */
-    OrderDTO cancelOrder(String orderId);
 }

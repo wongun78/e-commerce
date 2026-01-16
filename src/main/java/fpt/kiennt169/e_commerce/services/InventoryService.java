@@ -1,8 +1,5 @@
 package fpt.kiennt169.e_commerce.services;
 
-/**
- * Service for managing inventory reservations.
- */
 public interface InventoryService {
 
     /**

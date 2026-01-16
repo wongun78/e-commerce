@@ -5,16 +5,6 @@ import fpt.kiennt169.e_commerce.dtos.cart.*;
 public interface CartService {
 
     /**
-     * Get cart by user ID
-     */
-    CartDTO getCartByUserId(Long userId);
-
-    /**
-     * Get cart by session ID (for guest)
-     */
-    CartDTO getCartBySessionId(String sessionId);
-
-    /**
      * Get or create cart for user
      */
     CartDTO getOrCreateCartForUser(Long userId);

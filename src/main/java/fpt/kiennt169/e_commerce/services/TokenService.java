@@ -4,9 +4,6 @@ import org.springframework.security.core.Authentication;
 
 import java.util.Set;
 
-/**
- * Service interface for JWT token operations.
- */
 public interface TokenService {
 
     /**
@@ -18,16 +15,6 @@ public interface TokenService {
      * Validate a token and return true if valid
      */
     boolean validateToken(String token);
-
-    /**
-     * Get user ID from token
-     */
-    Long getUserIdFromToken(String token);
-
-    /**
-     * Get email from token
-     */
-    String getEmailFromToken(String token);
 
     /**
      * Get Authentication object from token
