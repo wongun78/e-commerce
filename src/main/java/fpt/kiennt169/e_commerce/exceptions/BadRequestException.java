@@ -10,7 +10,4 @@ public class BadRequestException extends BaseException {
         super(message, HttpStatus.BAD_REQUEST, ERROR_CODE);
     }
 
-    public BadRequestException(String message, String errorCode) {
-        super(message, HttpStatus.BAD_REQUEST, errorCode);
-    }
 }

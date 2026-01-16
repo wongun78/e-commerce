@@ -14,7 +14,4 @@ public class InsufficientStockException extends BaseException {
         );
     }
 
-    public InsufficientStockException(String message) {
-        super(message, HttpStatus.BAD_REQUEST, ERROR_CODE);
-    }
 }
