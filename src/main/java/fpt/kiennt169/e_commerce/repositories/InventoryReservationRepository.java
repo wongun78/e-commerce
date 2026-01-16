@@ -15,14 +15,6 @@ import java.util.List;
 @Repository
 public interface InventoryReservationRepository extends JpaRepository<InventoryReservation, String> {
     
-    List<InventoryReservation> findBySessionIdAndStatus(String sessionId, String status);
-    
-    long countBySessionIdAndStatus(String sessionId, String status);
-    
-    @Query("SELECT ir FROM InventoryReservation ir " +
-           "WHERE ir.status = 'ACTIVE' AND ir.expiryTime < :now")
-    List<InventoryReservation> findExpiredReservations(@Param("now") LocalDateTime now);
-    
     @Modifying
     @Query("UPDATE InventoryReservation ir SET ir.status = 'CANCELLED' " +
            "WHERE ir.sessionId = :sessionId AND ir.status = 'ACTIVE'")
@@ -32,4 +24,12 @@ public interface InventoryReservationRepository extends JpaRepository<InventoryR
     @Query("SELECT COALESCE(SUM(ir.quantity), 0) FROM InventoryReservation ir " +
            "WHERE ir.productVariant.id = :variantId AND ir.status = 'ACTIVE'")
     int getTotalReservedQuantity(@Param("variantId") Long variantId);
+    
+    List<InventoryReservation> findBySessionIdAndStatus(String sessionId, String status);
+    
+    long countBySessionIdAndStatus(String sessionId, String status);
+    
+    @Query("SELECT ir FROM InventoryReservation ir " +
+           "WHERE ir.expiryTime < :currentTime AND ir.status = 'ACTIVE'")
+    List<InventoryReservation> findExpiredReservations(@Param("currentTime") LocalDateTime currentTime);
 }
