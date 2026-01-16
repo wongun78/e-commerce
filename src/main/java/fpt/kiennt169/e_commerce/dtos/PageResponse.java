@@ -9,6 +9,8 @@ import lombok.Setter;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+
 @Schema(description = "Paginated response wrapper")
 @Getter
 @Setter
@@ -41,7 +43,7 @@ public class PageResponse<T> {
     @Schema(description = "Is the content empty?", example = "false")
     private boolean empty;
 
-    public static <T> PageResponse<T> from(org.springframework.data.domain.Page<T> page) {
+    public static <T> PageResponse<T> from(Page<T> page) {
         return PageResponse.<T>builder()
                 .content(page.getContent())
                 .pageNumber(page.getNumber())

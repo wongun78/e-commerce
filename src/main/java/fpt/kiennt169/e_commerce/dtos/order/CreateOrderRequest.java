@@ -31,7 +31,7 @@ public class CreateOrderRequest {
     @Pattern(regexp = "^(COD|BANK_TRANSFER)$", message = "Payment method must be COD or BANK_TRANSFER")
     private String paymentMethod;
 
-    private String reservationId; // Optional: if checkout/prepare was called first
+    private String reservationId;
 
     @NotBlank(message = "Shipping address is required")
     private String shippingAddress;
