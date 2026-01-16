@@ -6,12 +6,14 @@ import fpt.kiennt169.e_commerce.entities.CartItem;
 import fpt.kiennt169.e_commerce.entities.ProductVariant;
 import fpt.kiennt169.e_commerce.entities.User;
 import fpt.kiennt169.e_commerce.exceptions.BadRequestException;
+import fpt.kiennt169.e_commerce.exceptions.InsufficientStockException;
 import fpt.kiennt169.e_commerce.exceptions.ResourceNotFoundException;
 import fpt.kiennt169.e_commerce.mappers.CartMapper;
 import fpt.kiennt169.e_commerce.repositories.CartRepository;
 import fpt.kiennt169.e_commerce.repositories.ProductVariantRepository;
 import fpt.kiennt169.e_commerce.repositories.UserRepository;
 import fpt.kiennt169.e_commerce.services.CartService;
+import fpt.kiennt169.e_commerce.services.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,23 +30,7 @@ public class CartServiceImpl implements CartService {
     private final ProductVariantRepository variantRepository;
     private final UserRepository userRepository;
     private final CartMapper cartMapper;
-    private final fpt.kiennt169.e_commerce.services.InventoryService inventoryService;
-
-    @Override
-    @Transactional(readOnly = true)
-    public CartDTO getCartByUserId(Long userId) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart", "userId", userId));
-        return cartMapper.toDTO(cart);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public CartDTO getCartBySessionId(String sessionId) {
-        Cart cart = cartRepository.findBySessionId(sessionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart", "sessionId", sessionId));
-        return cartMapper.toDTO(cart);
-    }
+    private final InventoryService inventoryService;
 
     @Override
     @Transactional
@@ -99,7 +85,7 @@ public class CartServiceImpl implements CartService {
 
             int availableStock = inventoryService.getAvailableStock(request.getVariantId());
             if (availableStock < newQuantity) {
-                throw new fpt.kiennt169.e_commerce.exceptions.InsufficientStockException(
+                throw new InsufficientStockException(
                     "Insufficient stock", newQuantity, availableStock);
             }
 
@@ -107,7 +93,7 @@ public class CartServiceImpl implements CartService {
         } else {
             int availableStock = inventoryService.getAvailableStock(request.getVariantId());
             if (availableStock < request.getQuantity()) {
-                throw new fpt.kiennt169.e_commerce.exceptions.InsufficientStockException(
+                throw new InsufficientStockException(
                     "Insufficient stock", request.getQuantity(), availableStock);
             }
 
@@ -144,7 +130,7 @@ public class CartServiceImpl implements CartService {
         ProductVariant variant = item.getProductVariant();
         int availableStock = inventoryService.getAvailableStock(variant.getId());
         if (availableStock < request.getQuantity()) {
-            throw new fpt.kiennt169.e_commerce.exceptions.InsufficientStockException(
+            throw new InsufficientStockException(
                 "Insufficient stock", request.getQuantity(), availableStock);
         }
 

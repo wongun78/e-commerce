@@ -55,7 +55,6 @@ public class EmailServiceImpl implements EmailService {
             log.info("Order confirmation email sent to: {}", order.getCustomerEmail());
         } catch (Exception e) {
             log.error("Failed to send order confirmation email", e);
-            // Don't throw exception - email failure shouldn't break order creation
         }
     }
 

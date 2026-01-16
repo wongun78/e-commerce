@@ -37,7 +37,6 @@ public class CheckoutServiceImpl implements CheckoutService {
     public CheckoutPrepareResponse prepareCheckout(Long userId, String sessionId) {
         log.debug("Preparing checkout for userId={}, sessionId={}", userId, sessionId);
         
-        // Get cart
         Cart cart;
         if (userId != null) {
             cart = cartRepository.findByUserId(userId)
@@ -51,24 +50,20 @@ public class CheckoutServiceImpl implements CheckoutService {
             throw new BadRequestException("Cart is empty");
         }
         
-        // Generate reservation session ID
         String reservationSessionId = sessionId != null ? sessionId : "user-" + userId;
         
-        // Reserve stock for each item
         List<CheckoutPrepareResponse.ReservedItem> reservedItems = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
         
         for (CartItem cartItem : cart.getItems()) {
             ProductVariant variant = cartItem.getProductVariant();
             
-            // Reserve stock (this will throw exception if insufficient)
             inventoryService.reserveStock(
                     variant.getId(), 
                     cartItem.getQuantity(), 
                     reservationSessionId
             );
             
-            // Build response item
             CheckoutPrepareResponse.ReservedItem reservedItem = CheckoutPrepareResponse.ReservedItem.builder()
                     .variantId(variant.getId())
                     .productName(variant.getProduct().getName())

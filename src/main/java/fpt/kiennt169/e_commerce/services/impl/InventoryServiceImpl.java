@@ -2,6 +2,7 @@ package fpt.kiennt169.e_commerce.services.impl;
 
 import fpt.kiennt169.e_commerce.entities.InventoryReservation;
 import fpt.kiennt169.e_commerce.entities.ProductVariant;
+import fpt.kiennt169.e_commerce.exceptions.InsufficientStockException;
 import fpt.kiennt169.e_commerce.repositories.InventoryReservationRepository;
 import fpt.kiennt169.e_commerce.repositories.ProductVariantRepository;
 import fpt.kiennt169.e_commerce.services.InventoryService;
@@ -37,7 +38,7 @@ public class InventoryServiceImpl implements InventoryService {
         int available = variant.getStockQuantity() - reserved;
 
         if (available < quantity) {
-            throw new fpt.kiennt169.e_commerce.exceptions.InsufficientStockException(
+            throw new InsufficientStockException(
                 "Insufficient stock", quantity, available);
         }
 
