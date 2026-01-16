@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 /**
  * Data initialization for development environment.
  * Creates admin user, customer, categories, products with variants.
+ * 
+ * Order Status Flow: PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED
  */
 @Configuration
 @RequiredArgsConstructor
@@ -33,7 +35,7 @@ public class DataInitializer {
     @ConditionalOnProperty(name = "data.init.enabled", havingValue = "true", matchIfMissing = true)
     public CommandLineRunner initData() {
         return args -> {
-            log.info("=== Starting Data Initialization ===");
+            log.info("=== Hello, Starting Data Initialization ===");
             initUsers();
             initCategories();
             initProducts();
