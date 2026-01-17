@@ -352,31 +352,6 @@ newman run E-Commerce-API.postman_collection.json \
   --folder "3. Shopping Cart (Guest)"
 ```
 
-### Step 5: Run Shell Test Scripts (Recommended)
-
-```bash
-# Run all test suites (Guest + Customer + Admin)
-chmod +x test-all-roles.sh
-./test-all-roles.sh
-
-# Run individual test suites
-chmod +x test-guest-flow.sh test-customer-flow.sh test-admin-flow.sh
-./test-guest-flow.sh      # Test guest user flow (10 steps)
-./test-customer-flow.sh   # Test customer flow (12 steps)
-./test-admin-flow.sh      # Test admin operations (9 steps)
-
-# Test product filtering
-chmod +x test-product-filters.sh
-./test-product-filters.sh
-```
-
-**Test Results:**
-
-- ✅ Guest Flow: 10/10 tests passed
-- ✅ Customer Flow: 12/12 tests passed
-- ✅ Admin Flow: 9/9 tests passed
-- ✅ **100% Success Rate**
-
 ---
 
 ## 🏗️ Architecture & Design
