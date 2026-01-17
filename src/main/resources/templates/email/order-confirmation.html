@@ -6,73 +6,104 @@
     <title>Xác nhận đơn hàng</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         line-height: 1.6;
-        color: #333;
+        color: #212529;
         max-width: 600px;
         margin: 0 auto;
         padding: 20px;
+        background-color: #f5f5f5;
       }
       .header {
-        background: #4caf50;
-        color: white;
-        padding: 20px;
+        background: #1a1a1a;
+        color: #ffffff;
+        padding: 30px 20px;
         text-align: center;
+        border-bottom: 3px solid #0066cc;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
       }
       .content {
-        background: #f9f9f9;
-        padding: 20px;
-        border: 1px solid #ddd;
+        background: #ffffff;
+        padding: 30px;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       }
       .order-info {
-        background: white;
-        padding: 15px;
-        margin: 15px 0;
-        border-left: 4px solid #4caf50;
+        background: #f8f9fa;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 3px solid #0066cc;
+      }
+      .order-info p {
+        margin: 10px 0;
       }
       .items-table {
         width: 100%;
         border-collapse: collapse;
-        margin: 15px 0;
+        margin: 20px 0;
       }
       .items-table th,
       .items-table td {
-        padding: 10px;
+        padding: 12px;
         text-align: left;
-        border-bottom: 1px solid #ddd;
+        border-bottom: 1px solid #e0e0e0;
       }
       .items-table th {
-        background: #f0f0f0;
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
       }
       .total {
-        font-size: 1.2em;
-        font-weight: bold;
-        color: #4caf50;
+        font-size: 1.3em;
+        font-weight: 600;
+        color: #212529;
         text-align: right;
-        padding: 10px 0;
+        padding: 15px 0;
+        border-top: 2px solid #0066cc;
+        margin-top: 10px;
       }
       .tracking-btn {
         display: inline-block;
-        background: #4caf50;
+        background: #0066cc;
         color: white;
-        padding: 12px 24px;
+        padding: 14px 32px;
         text-decoration: none;
-        border-radius: 4px;
+        border-radius: 3px;
         margin: 20px 0;
+        font-weight: 500;
+        transition: background 0.3s ease;
+      }
+      .tracking-btn:hover {
+        background: #0052a3;
       }
       .footer {
         text-align: center;
-        color: #666;
-        font-size: 0.9em;
-        margin-top: 20px;
+        color: #6c757d;
+        font-size: 0.85em;
+        margin-top: 30px;
         padding-top: 20px;
-        border-top: 1px solid #ddd;
+        border-top: 1px solid #e0e0e0;
+      }
+      .note {
+        background: #f8f9fa;
+        padding: 15px;
+        margin-top: 20px;
+        border-left: 3px solid #6c757d;
+        font-size: 0.9em;
       }
     </style>
   </head>
   <body>
     <div class="header">
-      <h1>🎉 Cảm ơn bạn đã đặt hàng!</h1>
+      <h1>Xác Nhận Đơn Hàng</h1>
     </div>
 
     <div class="content">
@@ -140,22 +171,26 @@
       </p>
 
       <div style="text-align: center">
-        <a th:href="${trackingLink}" class="tracking-btn"
-          >📦 Theo dõi đơn hàng</a
-        >
+        <a th:href="${trackingLink}" class="tracking-btn">Theo Dõi Đơn Hàng</a>
       </div>
 
-      <p>
+      <div class="note">
         <strong>Lưu ý:</strong> Bạn có thể theo dõi trạng thái đơn hàng bất kỳ
-        lúc nào bằng cách click vào link trên. <em>Không cần đăng nhập!</em>
-      </p>
+        lúc nào bằng cách sử dụng mã đơn hàng và email đăng ký. Không cần đăng
+        nhập.
+      </div>
     </div>
 
     <div class="footer">
-      <p><strong>Hung Hypebeast</strong> - Local Brand Thời Trang</p>
-      <p>Hotline: 1900-xxxx | Email: support@hunghypebeast.com</p>
-      <p style="font-size: 0.8em; color: #999">
-        Email này được gửi tự động, vui lòng không reply.
+      <p style="margin: 5px 0; font-weight: 600; color: #212529">
+        HUNG HYPEBEAST
+      </p>
+      <p style="margin: 5px 0">Local Brand Thời Trang</p>
+      <p style="margin: 15px 0 5px 0">
+        Hotline: 1900-xxxx | Email: support@hunghypebeast.com
+      </p>
+      <p style="font-size: 0.8em; color: #adb5bd; margin-top: 15px">
+        Đây là email tự động, vui lòng không trả lời trực tiếp.
       </p>
     </div>
   </body>
