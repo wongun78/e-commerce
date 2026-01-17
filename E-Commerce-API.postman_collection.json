@@ -1,0 +1,938 @@
+{
+  "info": {
+    "_postman_id": "e-commerce-api-2026",
+    "name": "E-Commerce API - Phase 1",
+    "description": "Complete API collection for E-Commerce Backend System\n\nThis collection includes:\n- Authentication (Login)\n- Product browsing (Public)\n- Shopping cart (Guest & Customer)\n- Checkout with stock reservation\n- Order management\n- Admin operations\n\nOrder Status Flow: PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED\n\nBase URL: http://localhost:8080/api/v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"admin_token\", jsonData.data.accessToken);",
+                  "    pm.environment.set(\"admin_id\", jsonData.data.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@hunghypebeast.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as admin user to get JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Customer Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"customer_token\", jsonData.data.accessToken);",
+                  "    pm.environment.set(\"customer_id\", jsonData.data.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"Customer@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as customer to get JWT token"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for login"
+    },
+    {
+      "name": "2. Products (Public)",
+      "item": [
+        {
+          "name": "Browse All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data.content.length > 0) {",
+                  "        pm.environment.set(\"product_id\", jsonData.data.content[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Browse all products (no authentication required)"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?categoryId=1&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "categoryId",
+                  "value": "1",
+                  "description": "Filter by category (1=Sneakers, 2=Streetwear, 3=Accessories)"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Filter products by category ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by Price Range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?minPrice=3000000&maxPrice=5000000&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "minPrice",
+                  "value": "3000000",
+                  "description": "Minimum price in VND (e.g., 3,000,000)"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "5000000",
+                  "description": "Maximum price in VND (e.g., 5,000,000)"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Filter products by price range"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?search=jordan&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "jordan",
+                  "description": "Search keyword in product name (case-insensitive)"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Search products by name (partial match, case-insensitive)"
+          },
+          "response": []
+        },
+        {
+          "name": "Combined Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?categoryId=1&minPrice=3000000&maxPrice=6000000&search=air&page=0&size=10&sort=basePrice,asc",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "categoryId",
+                  "value": "1",
+                  "description": "Category: Sneakers"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "3000000",
+                  "description": "Min: 3M VND"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "6000000",
+                  "description": "Max: 6M VND"
+                },
+                {
+                  "key": "search",
+                  "value": "air",
+                  "description": "Search: 'air'"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "basePrice,asc",
+                  "description": "Sort by price (ascending)"
+                }
+              ]
+            },
+            "description": "Combine multiple filters: category + price range + search + sorting"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data.variants.length > 0) {",
+                  "        pm.environment.set(\"variant_id\", jsonData.data.variants[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            },
+            "description": "Get product details with variants"
+          },
+          "response": []
+        }
+      ],
+      "description": "Public product browsing endpoints with advanced filtering"
+    },
+    {
+      "name": "3. Shopping Cart (Guest)",
+      "item": [
+        {
+          "name": "Add Item to Cart (Guest)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data.items.length > 0) {",
+                  "        pm.environment.set(\"cart_item_id\", jsonData.data.items[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Guest-ID",
+                "value": "{{guest_id}}",
+                "description": "Guest session ID (UUID)"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variantId\": {{variant_id}},\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/items",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items"]
+            },
+            "description": "Add item to guest cart using X-Guest-ID header"
+          },
+          "response": []
+        },
+        {
+          "name": "View Cart (Guest)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Guest-ID",
+                "value": "{{guest_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cart",
+              "host": ["{{base_url}}"],
+              "path": ["cart"]
+            },
+            "description": "View guest cart contents"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Cart Item (Guest)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Guest-ID",
+                "value": "{{guest_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/items/{{cart_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items", "{{cart_item_id}}"]
+            },
+            "description": "Update cart item quantity"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Cart Item (Guest)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Guest-ID",
+                "value": "{{guest_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cart/items/{{cart_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items", "{{cart_item_id}}"]
+            },
+            "description": "Remove item from cart"
+          },
+          "response": []
+        }
+      ],
+      "description": "Shopping cart operations for guest users"
+    },
+    {
+      "name": "4. Shopping Cart (Customer)",
+      "item": [
+        {
+          "name": "Add Item to Cart (Customer)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variantId\": {{variant_id}},\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/items",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items"]
+            },
+            "description": "Add item to authenticated customer cart"
+          },
+          "response": []
+        },
+        {
+          "name": "View Cart (Customer)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cart",
+              "host": ["{{base_url}}"],
+              "path": ["cart"]
+            },
+            "description": "View authenticated customer cart"
+          },
+          "response": []
+        }
+      ],
+      "description": "Shopping cart operations for authenticated customers"
+    },
+    {
+      "name": "5. Checkout & Reservation",
+      "item": [
+        {
+          "name": "Prepare Checkout (Guest)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"reservation_id\", jsonData.data.reservationId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Guest-ID",
+                "value": "{{guest_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/checkout/prepare",
+              "host": ["{{base_url}}"],
+              "path": ["checkout", "prepare"]
+            },
+            "description": "Reserve stock for 15 minutes (pessimistic locking)"
+          },
+          "response": []
+        },
+        {
+          "name": "Prepare Checkout (Customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"reservation_id_customer\", jsonData.data.reservationId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/checkout/prepare",
+              "host": ["{{base_url}}"],
+              "path": ["checkout", "prepare"]
+            },
+            "description": "Reserve stock for authenticated customer"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Reservation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Guest-ID",
+                "value": "{{guest_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/checkout/verify/{{reservation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["checkout", "verify", "{{reservation_id}}"]
+            },
+            "description": "Check if reservation is still valid"
+          },
+          "response": []
+        }
+      ],
+      "description": "Checkout flow with stock reservation (15 minutes hold)"
+    },
+    {
+      "name": "6. Orders (Guest)",
+      "item": [
+        {
+          "name": "Create Order (Guest)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"order_id\", jsonData.data.id);",
+                  "    pm.environment.set(\"order_email\", jsonData.data.customerEmail);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Guest-ID",
+                "value": "{{guest_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Guest Test User\",\n  \"customerEmail\": \"guest@example.com\",\n  \"customerPhone\": \"0901234567\",\n  \"shippingAddress\": \"123 Test Street, District 1, HCMC\",\n  \"paymentMethod\": \"COD\",\n  \"reservationId\": \"{{reservation_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            },
+            "description": "Create order with reserved stock"
+          },
+          "response": []
+        }
+      ],
+      "description": "Order creation for guest users"
+    },
+    {
+      "name": "7. Orders (Customer)",
+      "item": [
+        {
+          "name": "Create Order (Customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"customer_order_id\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Test Customer\",\n  \"customerEmail\": \"customer@example.com\",\n  \"customerPhone\": \"0909876543\",\n  \"shippingAddress\": \"456 Customer Ave, District 2, HCMC\",\n  \"paymentMethod\": \"COD\",\n  \"reservationId\": \"{{reservation_id_customer}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            },
+            "description": "Create order for authenticated customer"
+          },
+          "response": []
+        },
+        {
+          "name": "View My Orders",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders?page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "View authenticated customer's order history"
+          },
+          "response": []
+        },
+        {
+          "name": "View Order Details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/{{customer_order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{customer_order_id}}"]
+            },
+            "description": "View specific order details"
+          },
+          "response": []
+        }
+      ],
+      "description": "Order management for authenticated customers"
+    },
+    {
+      "name": "8. Public Order Tracking",
+      "item": [
+        {
+          "name": "Track Order (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/public/orders/{{order_id}}?email={{order_email}}",
+              "host": ["{{base_url}}"],
+              "path": ["public", "orders", "{{order_id}}"],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{order_email}}",
+                  "description": "Customer email for verification"
+                }
+              ]
+            },
+            "description": "Track order status without authentication (email verification required)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Public order tracking (no authentication)"
+    },
+    {
+      "name": "9. Admin Operations",
+      "item": [
+        {
+          "name": "Get All Orders",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/admin?page=0&size=20&sort=createdAt,desc",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "admin"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc"
+                }
+              ]
+            },
+            "description": "Admin: View all orders in system"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order Details (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/admin/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "admin", "{{order_id}}"]
+            },
+            "description": "Admin: View any order details"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/admin/{{order_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "admin", "{{order_id}}", "status"]
+            },
+            "description": "Admin: Update order status (PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED)"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Orders by Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/admin?status=CONFIRMED",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "admin"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "CONFIRMED"
+                }
+              ]
+            },
+            "description": "Admin: Filter orders by status"
+          },
+          "response": []
+        }
+      ],
+      "description": "Admin-only operations (requires ROLE_ADMIN)"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Generate guest ID if not exists",
+          "if (!pm.environment.get(\"guest_id\")) {",
+          "    pm.environment.set(\"guest_id\", pm.variables.replaceIn('{{$guid}}'));",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api/v1",
+      "type": "string"
+    }
+  ]
+}
