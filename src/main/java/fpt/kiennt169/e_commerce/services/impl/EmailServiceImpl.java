@@ -26,14 +26,14 @@ public class EmailServiceImpl implements EmailService {
     @Value("${spring.mail.username:noreply@hunghypebeast.com}")
     private String fromEmail;
 
-    @Value("${app.frontend.url:http://localhost:3000}")
-    private String frontendUrl;
+    @Value("${app.order.tracking.base-url:http://localhost:8080/api/v1/public/orders}")
+    private String trackingBaseUrl;
 
     @Override
     public void sendOrderConfirmation(Order order) {
         try {
-            String trackingLink = String.format("%s/track/%s?email=%s", 
-                    frontendUrl, order.getId(), order.getCustomerEmail());
+            String trackingLink = String.format("%s/%s?email=%s", 
+                    trackingBaseUrl, order.getId(), order.getCustomerEmail());
 
             Context context = new Context();
             context.setVariable("customerName", order.getCustomerName());
@@ -61,8 +61,8 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendOrderStatusUpdate(Order order, String oldStatus, String newStatus) {
         try {
-            String trackingLink = String.format("%s/track/%s?email=%s", 
-                    frontendUrl, order.getId(), order.getCustomerEmail());
+            String trackingLink = String.format("%s/%s?email=%s", 
+                    trackingBaseUrl, order.getId(), order.getCustomerEmail());
 
             Context context = new Context();
             context.setVariable("customerName", order.getCustomerName());
