@@ -2,15 +2,20 @@ package fpt.kiennt169.e_commerce.services.impl;
 
 import fpt.kiennt169.e_commerce.dtos.auth.AuthResponse;
 import fpt.kiennt169.e_commerce.dtos.auth.LoginRequest;
+import fpt.kiennt169.e_commerce.dtos.auth.RegisterRequest;
 import fpt.kiennt169.e_commerce.entities.User;
+import fpt.kiennt169.e_commerce.exceptions.BadRequestException;
+import fpt.kiennt169.e_commerce.repositories.UserRepository;
 import fpt.kiennt169.e_commerce.services.AuthService;
 import fpt.kiennt169.e_commerce.services.TokenService;
+import fpt.kiennt169.e_commerce.util.MessageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +28,9 @@ public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final MessageUtil messageUtil;
 
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
@@ -52,6 +60,44 @@ public class AuthServiceImpl implements AuthService {
                         .email(user.getEmail())
                         .fullName(user.getFullName())
                         .roles(Set.of(user.getRole()))
+                        .build()
+        );
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse register(RegisterRequest request) {
+        log.debug("Registration attempt for email: {}", request.getEmail());
+
+        // Check if email already exists
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new BadRequestException(messageUtil.getMessage("user.email.exists"));
+        }
+
+        // Password validation is handled by @StrongPassword annotation via @Valid in controller
+
+        // Create new user
+        User newUser = User.builder()
+                .email(request.getEmail())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName())
+                .role("ROLE_CUSTOMER") // Default role
+                .build();
+
+        userRepository.save(newUser);
+        log.info("User registered successfully: {}", newUser.getEmail());
+
+        // Generate token for immediate login
+        String token = tokenService.generateToken(newUser.getId(), newUser.getEmail(), Set.of(newUser.getRole()));
+
+        return AuthResponse.of(
+                token,
+                jwtExpiration,
+                AuthResponse.UserInfo.builder()
+                        .id(newUser.getId())
+                        .email(newUser.getEmail())
+                        .fullName(newUser.getFullName())
+                        .roles(Set.of(newUser.getRole()))
                         .build()
         );
     }
