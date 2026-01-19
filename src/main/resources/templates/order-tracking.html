@@ -1,0 +1,310 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Theo dõi đơn hàng #[[${order.id.substring(0, 8)}]]</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #212529;
+        background-color: #f5f5f5;
+        padding: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        background: #1a1a1a;
+        color: #ffffff;
+        padding: 30px 20px;
+        text-align: center;
+        border-bottom: 3px solid #0066cc;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 1.8em;
+        font-weight: 600;
+      }
+      .content {
+        padding: 30px;
+      }
+      .section {
+        margin-bottom: 30px;
+      }
+      .section h2 {
+        color: #1a1a1a;
+        font-size: 1.3em;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e9ecef;
+      }
+      .info-grid {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 12px;
+        margin-bottom: 15px;
+      }
+      .info-label {
+        font-weight: 600;
+        color: #495057;
+      }
+      .info-value {
+        color: #212529;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.95em;
+      }
+      .status-PENDING {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .status-CONFIRMED {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      .status-PROCESSING {
+        background-color: #cfe2ff;
+        color: #084298;
+      }
+      .status-SHIPPED {
+        background-color: #d3f9d8;
+        color: #0f5132;
+      }
+      .status-DELIVERED {
+        background-color: #d1e7dd;
+        color: #0a3622;
+      }
+      .status-CANCELLED {
+        background-color: #f8d7da;
+        color: #842029;
+      }
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+      .items-table th {
+        background: #f8f9fa;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+      }
+      .items-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+      }
+      .items-table tr:last-child td {
+        border-bottom: none;
+      }
+      .total-row {
+        background: #f8f9fa;
+        font-weight: 600;
+        font-size: 1.1em;
+      }
+      .text-end {
+        text-align: right;
+      }
+      .footer {
+        background: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+        border-top: 1px solid #dee2e6;
+      }
+      .footer p {
+        margin: 5px 0;
+        color: #6c757d;
+      }
+      .footer strong {
+        color: #212529;
+      }
+      @media (max-width: 600px) {
+        .info-grid {
+          grid-template-columns: 1fr;
+          gap: 5px;
+        }
+        .info-label {
+          margin-top: 10px;
+        }
+        .items-table {
+          font-size: 0.9em;
+        }
+        .items-table th,
+        .items-table td {
+          padding: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Theo Dõi Đơn Hàng</h1>
+      </div>
+
+      <div class="content">
+        <!-- Order Info Section -->
+        <div class="section">
+          <h2>Thông Tin Đơn Hàng</h2>
+          <div class="info-grid">
+            <span class="info-label">Mã đơn hàng:</span>
+            <span class="info-value" th:text="${order.id}">ORD123456</span>
+
+            <span class="info-label">Trạng thái:</span>
+            <span>
+              <span
+                class="status-badge"
+                th:classappend="'status-' + ${order.status}"
+                th:text="${order.status}"
+                >PENDING</span
+              >
+            </span>
+
+            <span class="info-label">Ngày đặt:</span>
+            <span
+              class="info-value"
+              th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"
+              >17/01/2026 08:30</span
+            >
+
+            <span class="info-label">Tổng tiền:</span>
+            <span
+              class="info-value"
+              style="font-weight: 600; color: #0066cc; font-size: 1.1em"
+              th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"
+              >4,500,000 đ</span
+            >
+          </div>
+        </div>
+
+        <!-- Customer Info Section -->
+        <div class="section">
+          <h2>Thông Tin Khách Hàng</h2>
+          <div class="info-grid">
+            <span class="info-label">Họ tên:</span>
+            <span class="info-value" th:text="${order.customerName}"
+              >Nguyen Van A</span
+            >
+
+            <span class="info-label">Email:</span>
+            <span class="info-value" th:text="${order.customerEmail}"
+              >customer@example.com</span
+            >
+
+            <span class="info-label">Số điện thoại:</span>
+            <span class="info-value" th:text="${order.customerPhone}"
+              >0987654321</span
+            >
+
+            <span class="info-label">Địa chỉ giao hàng:</span>
+            <span class="info-value" th:text="${order.shippingAddress}"
+              >123 Test Street</span
+            >
+          </div>
+        </div>
+
+        <!-- Payment Info Section -->
+        <div class="section">
+          <h2>Thông Tin Thanh Toán</h2>
+          <div class="info-grid">
+            <span class="info-label">Phương thức:</span>
+            <span class="info-value" th:text="${order.paymentMethod}">COD</span>
+
+            <span class="info-label">Trạng thái thanh toán:</span>
+            <span class="info-value" th:text="${order.paymentStatus}"
+              >PENDING</span
+            >
+          </div>
+        </div>
+
+        <!-- Order Items Section -->
+        <div class="section">
+          <h2>Chi Tiết Sản Phẩm</h2>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Sản phẩm</th>
+                <th>Size/Màu</th>
+                <th class="text-end">Số lượng</th>
+                <th class="text-end">Đơn giá</th>
+                <th class="text-end">Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="item : ${order.items}">
+                <td>
+                  <strong th:text="${item.productName}">Air Jordan 1</strong>
+                  <br />
+                  <small
+                    style="color: #6c757d"
+                    th:text="'SKU: ' + ${item.variantSku}"
+                    >SKU: AJ1-40-RB</small
+                  >
+                </td>
+                <td>
+                  <span th:text="${item.variantSize}">40</span> /
+                  <span th:text="${item.variantColor}">RED_BLACK</span>
+                </td>
+                <td
+                  class="text-end"
+                  th:text="${item.quantity}"
+                  style="font-weight: 600"
+                >
+                  1
+                </td>
+                <td
+                  class="text-end"
+                  th:text="${#numbers.formatDecimal(item.priceAtPurchase, 0, 'COMMA', 0, 'POINT')} + ' đ'"
+                >
+                  4,500,000 đ
+                </td>
+                <td
+                  class="text-end"
+                  style="font-weight: 600"
+                  th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'"
+                >
+                  4,500,000 đ
+                </td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="4" class="text-end">Tổng cộng:</td>
+                <td
+                  class="text-end"
+                  style="color: #0066cc"
+                  th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"
+                >
+                  4,500,000 đ
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p><strong>Hung Hypebeast</strong></p>
+        <p style="margin-top: 15px">
+          Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ:
+          <strong>support@hunghypebeast.com</strong>
+        </p>
+        <p style="font-size: 0.9em; color: #adb5bd; margin-top: 15px">
+          © 2026 Hung Hypebeast. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

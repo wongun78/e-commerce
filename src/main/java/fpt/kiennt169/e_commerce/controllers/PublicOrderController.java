@@ -22,8 +22,8 @@ public class PublicOrderController {
 
     private final OrderService orderService;
 
-    @GetMapping("/{orderId}")
-    @Operation(summary = "Track order", description = "Track order status using order ID and email (no authentication required)")
+    @GetMapping(value = "/{orderId}", produces = "application/json")
+    @Operation(summary = "Track order (JSON)", description = "Track order status using order ID and email (returns JSON)")
     public ResponseEntity<ApiResponse<OrderDTO>> trackOrder(
             @Parameter(description = "Order ID") @PathVariable String orderId,
             @Parameter(description = "Customer email") @RequestParam String email) {
