@@ -13,10 +13,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
-/**
- * OpenAPI 3.0 configuration for Swagger UI documentation.
- * Enables JWT authentication in API testing interface.
- */
 @Configuration
 public class OpenApiConfig {
 
@@ -58,8 +54,8 @@ public class OpenApiConfig {
                 .version(API_VERSION)
                 .description(API_DESCRIPTION)
                 .contact(new Contact()
-                        .name("Development Team")
-                        .email("dev@ecommerce.local"));
+                        .name("Developer")
+                        .email("kiennt169@gmail.com"));
     }
 
     private SecurityScheme securityScheme() {

@@ -69,25 +69,20 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse register(RegisterRequest request) {
         log.debug("Registration attempt for email: {}", request.getEmail());
 
-        // Check if email already exists
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new BadRequestException(messageUtil.getMessage("user.email.exists"));
         }
 
-        // Password validation is handled by @StrongPassword annotation via @Valid in controller
-
-        // Create new user
         User newUser = User.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .role("ROLE_CUSTOMER") // Default role
+                .role("ROLE_CUSTOMER")
                 .build();
 
         userRepository.save(newUser);
         log.info("User registered successfully: {}", newUser.getEmail());
 
-        // Generate token for immediate login
         String token = tokenService.generateToken(newUser.getId(), newUser.getEmail(), Set.of(newUser.getRole()));
 
         return AuthResponse.of(
