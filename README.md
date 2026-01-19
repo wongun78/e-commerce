@@ -207,36 +207,6 @@ Application tự động seed dữ liệu khi khởi động (nếu database tr�
    - Size L: 40 items
 ```
 
-### Reset Database (Nếu Cần)
-
-```bash
-# Stop application
-# Delete all data
-./reset-database.sh
-
-# Restart application (auto-seed will run)
-./gradlew bootRun
-```
-
-**Script `reset-database.sh`:**
-
-```bash
-#!/bin/bash
-
-echo "🗑️  Resetting database..."
-
-# Connect to PostgreSQL and drop all tables
-PGPASSWORD=postgres psql -h localhost -U postgres -d ecommerce <<EOF
-DROP SCHEMA public CASCADE;
-CREATE SCHEMA public;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO public;
-EOF
-
-echo "✅ Database reset complete!"
-echo "🔄 Restart application to auto-seed data"
-```
-
 ---
 
 ## 📡 API Documentation
@@ -244,7 +214,9 @@ echo "🔄 Restart application to auto-seed data"
 ### Swagger UI
 
 ```
+
 URL: http://localhost:8080/swagger-ui.html
+
 ```
 
 ### Postman Collection
@@ -277,6 +249,7 @@ Import files vào Postman:
 #### A. Guest Flow (No Authentication)
 
 ```
+
 0. Register New Account (Optional)
    → Email, password (strong), full name
    → Auto-login after registration
@@ -304,11 +277,13 @@ Import files vào Postman:
 
 7. Track Order (Public)
    → Uses order_id + email verification
+
 ```
 
 #### B. Customer Flow (Authenticated)
 
 ```
+
 1. Register or Login
    → Register: POST /api/v1/auth/register
    → Login: POST /api/v1/auth/login
@@ -330,11 +305,13 @@ Import files vào Postman:
 
 7. View Order Details
    → Authorization check
+
 ```
 
 #### C. Admin Flow (Full Access)
 
 ```
+
 1. Admin Login
    → Saves admin_token to environment
 
@@ -352,6 +329,7 @@ Import files vào Postman:
 
 6. Search by Customer Email
    → ?email=customer@example.com
+
 ```
 
 ### Step 3: Test Scenarios
@@ -359,24 +337,29 @@ Import files vào Postman:
 #### Scenario 1: Last Item Competition
 
 ```
+
 1. Browse Products → Select LAST ITEM (variant với stock=1)
 2. Open 2 Postman tabs:
    - Tab 1: Add to Cart (quantity=1) → Success
    - Tab 2: Add to Cart (quantity=1) → Error: "Insufficient stock"
+
 ```
 
 #### Scenario 2: Reservation Timeout
 
 ```
+
 1. Prepare Checkout → Get reservation_id
 2. Wait 16 minutes
 3. Try to Create Order → Error: "Reservation expired"
 4. Stock released back to available
+
 ```
 
 #### Scenario 3: Authorization Testing
 
 ```
+
 1. Customer Login → Get customer_token
 2. Try to access Admin endpoint (Get All Orders)
    → 403 Forbidden
@@ -385,6 +368,7 @@ Import files vào Postman:
 4. Login as Customer B
 5. Try to view Customer A's order
    → 404 Not Found (authorization check)
+
 ```
 
 ### Step 4: Run Collection with Newman (CLI)
@@ -569,13 +553,6 @@ curl "http://localhost:8080/api/v1/products?sort=basePrice,asc"
 ```
 
 **📚 Full Documentation:** See [PRODUCT-FILTER-GUIDE.md](PRODUCT-FILTER-GUIDE.md)
-
-**🧪 Run Filter Tests:**
-
-```bash
-chmod +x test-product-filters.sh
-./test-product-filters.sh
-```
 
 ### Key Design Decisions
 
@@ -839,15 +816,6 @@ This project is developed for educational purposes as part of FPT University Bac
 - [x] Postman collection with 30+ requests
 - [x] 100% test coverage for all roles
 - [x] Comprehensive README documentation
-
-### 📊 Test Results
-
-```bash
-✅ Guest Flow: 11/11 tests passed
-✅ Customer Flow: 11/11 tests passed
-✅ Admin Flow: 10/10 tests passed
-✅ Overall: 100% pass rate
-```
 
 **Last Updated**: January 14, 2026  
 **Version**: 1.0.0 (Phase 1 Complete)
