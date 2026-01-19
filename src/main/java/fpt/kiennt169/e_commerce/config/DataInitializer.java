@@ -13,12 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 
-/**
- * Data initialization for development environment.
- * Creates admin user, customer, categories, products with variants.
- * 
- * Order Status Flow: PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED
- */
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
@@ -46,12 +40,12 @@ public class DataInitializer {
     private void initUsers() {
         log.info("Initializing users...");
 
-        // Admin user
+        // Admin user (Password meets strong requirements: 8+ chars, uppercase, lowercase, digit, special char)
         String adminEmail = "admin@hunghypebeast.com";
         if (userRepository.findByEmail(adminEmail).isEmpty()) {
             User admin = User.builder()
                     .email(adminEmail)
-                    .passwordHash(passwordEncoder.encode("Admin@123"))
+                    .passwordHash(passwordEncoder.encode("Admin@123")) // Strong password: Admin@123
                     .fullName("System Administrator")
                     .role("ROLE_ADMIN")
                     .build();
@@ -59,12 +53,12 @@ public class DataInitializer {
             log.info("✓ Created admin user: {}", adminEmail);
         }
 
-        // Customer user for testing
+        // Customer user for testing (Password meets strong requirements)
         String customerEmail = "customer@example.com";
         if (userRepository.findByEmail(customerEmail).isEmpty()) {
             User customer = User.builder()
                     .email(customerEmail)
-                    .passwordHash(passwordEncoder.encode("Customer@123"))
+                    .passwordHash(passwordEncoder.encode("Customer@123")) // Strong password: Customer@123
                     .fullName("Test Customer")
                     .role("ROLE_CUSTOMER")
                     .build();
