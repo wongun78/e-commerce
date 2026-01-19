@@ -2,13 +2,52 @@
   "info": {
     "_postman_id": "e-commerce-api-2026",
     "name": "E-Commerce API - Phase 1",
-    "description": "Complete API collection for E-Commerce Backend System\n\nThis collection includes:\n- Authentication (Login)\n- Product browsing (Public)\n- Shopping cart (Guest & Customer)\n- Checkout with stock reservation\n- Order management\n- Admin operations\n\nOrder Status Flow: PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED\n\nBase URL: http://localhost:8080/api/v1",
+    "description": "Complete API collection for E-Commerce Backend System\n\nThis collection includes:\n- Authentication (Registration + Login with Strong Password)\n- Product browsing with filters (Public)\n- Shopping cart (Guest & Customer)\n- Checkout with stock reservation\n- Order management\n- Public order tracking (HTML view or JSON)\n- Email notifications (Gmail SMTP)\n- Admin operations\n\nPassword Requirements (Strong):\n- Minimum 8 characters\n- At least 1 uppercase, 1 lowercase, 1 digit, 1 special char\n\nOrder Status Flow: PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED\n\nBase URL: http://localhost:8080/api/v1",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
       "name": "1. Authentication",
       "item": [
+        {
+          "name": "Register New Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"customer_token\", jsonData.data.accessToken);",
+                  "    pm.environment.set(\"customer_id\", jsonData.data.user.id);",
+                  "    console.log(\"✓ New customer registered and auto-logged in\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newcustomer@example.com\",\n  \"password\": \"NewCustomer@123\",\n  \"fullName\": \"New Test Customer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register new customer account with strong password validation.\n\nPassword Requirements:\n- Minimum 8 characters\n- At least 1 uppercase letter\n- At least 1 lowercase letter\n- At least 1 digit\n- At least 1 special character (@$!%*?&#^()_+=-{}[]|:;\"'<>,./)\n\nAuto-login after successful registration."
+          },
+          "response": []
+        },
         {
           "name": "Admin Login",
           "event": [
@@ -86,7 +125,7 @@
           "response": []
         }
       ],
-      "description": "Authentication endpoints for login"
+      "description": "Authentication endpoints for registration and login"
     },
     {
       "name": "2. Products (Public)",
@@ -759,10 +798,16 @@
       "name": "8. Public Order Tracking",
       "item": [
         {
-          "name": "Track Order (Public)",
+          "name": "Track Order (JSON)",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/public/orders/{{order_id}}?email={{order_email}}",
               "host": ["{{base_url}}"],
@@ -775,12 +820,39 @@
                 }
               ]
             },
-            "description": "Track order status without authentication (email verification required)"
+            "description": "Track order status without authentication (returns JSON)"
+          },
+          "response": []
+        },
+        {
+          "name": "Track Order (HTML View)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/html",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/public/orders/{{order_id}}?email={{order_email}}",
+              "host": ["{{base_url}}"],
+              "path": ["public", "orders", "{{order_id}}"],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{order_email}}",
+                  "description": "Customer email for verification"
+                }
+              ]
+            },
+            "description": "Track order status without authentication (returns HTML page) - Open in browser for best experience"
           },
           "response": []
         }
       ],
-      "description": "Public order tracking (no authentication)"
+      "description": "Public order tracking with content negotiation (HTML or JSON)"
     },
     {
       "name": "9. Admin Operations",

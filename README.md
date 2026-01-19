@@ -7,13 +7,15 @@ Hệ thống Backend E-Commerce (Headless) cho Local Brand "Hùng Hype Beast", p
 ### Tính Năng Chính
 
 - ✅ **Authentication & Authorization**: JWT-based với role-based access control (Admin, Customer)
+- ✅ **User Registration**: Strong password validation (8+ chars, uppercase, lowercase, digit, special char)
 - ✅ **Product Management**: Browse products, variants, categories (Public access)
 - ✅ **Product Filters**: Filter by category, price range, search (JPA Specification)
 - ✅ **Shopping Cart**: Guest (session-based) & Customer (authenticated)
 - ✅ **Stock Reservation**: Pessimistic locking, giữ hàng 15 phút
 - ✅ **Order Management**: Create, track, update status
-- ✅ **Public Order Tracking**: Theo dõi đơn hàng bằng email (không cần login)
-- ✅ **Admin Operations**: Quản lý đơn hàng, cập nhật trạng thái, email notifications
+- ✅ **Public Order Tracking**: Theo dõi đơn hàng bằng email (HTML view hoặc JSON)
+- ✅ **Email Notifications**: Gmail SMTP, Thymeleaf templates (order confirmation, status updates)
+- ✅ **Admin Operations**: Quản lý đơn hàng, cập nhật trạng thái
 - ✅ **API Documentation**: Swagger UI
 
 ---
@@ -88,7 +90,7 @@ Kiểm tra file `src/main/resources/application.properties`:
 
 ```properties
 # Database Configuration
-spring.datasource.url=jdbc:postgresql://localhost:5432/ecommerce
+spring.datasource.url=jdbc:postgresql://localhost:5432/ecommerce_db
 spring.datasource.username=postgres
 spring.datasource.password=postgres
 spring.jpa.hibernate.ddl-auto=update
@@ -97,9 +99,42 @@ spring.jpa.hibernate.ddl-auto=update
 jwt.secret=your-secret-key-min-256-bits-for-hs256-algorithm
 jwt.expiration=86400000
 
+# Email Configuration (Gmail SMTP)
+spring.mail.enabled=true
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=your-email@gmail.com
+spring.mail.password=your-app-password
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# Order Tracking URL (for email links)
+app.order.tracking.base-url=http://localhost:8080/api/v1/public/orders
+
 # Server Configuration
 server.port=8080
 ```
+
+#### 📧 Cấu Hình Email (REQUIRED for email notifications)
+
+**Bước 1: Tạo Gmail App Password**
+
+1. Vào [Google Account Security](https://myaccount.google.com/security)
+2. Bật **2-Step Verification**
+3. Vào **App passwords** → Generate new password
+4. Chọn **Mail** + **Other (Custom name)** → Nhập "E-Commerce API"
+5. Copy **16-digit password** (vd: `abcd efgh ijkl mnop`)
+
+**Bước 2: Update application.properties**
+
+```properties
+spring.mail.username=your-email@gmail.com
+spring.mail.password=abcd efgh ijkl mnop
+```
+
+**Bước 3: Test Email**
+
+Create order → Check email inbox → Nhận email xác nhận đơn hàng với professional template
 
 ### 5. Build & Run Application
 
@@ -139,6 +174,17 @@ Application tự động seed dữ liệu khi khởi động (nếu database tr�
 | ----------------------- | ------------ | ------------- | ------------- |
 | admin@hunghypebeast.com | Admin@123    | ROLE_ADMIN    | Admin account |
 | customer@example.com    | Customer@123 | ROLE_CUSTOMER | Test customer |
+
+**🔐 Password Requirements (Strong Password Validation):**
+
+- Minimum 8 characters
+- At least 1 uppercase letter (A-Z)
+- At least 1 lowercase letter (a-z)
+- At least 1 digit (0-9)
+- At least 1 special character (@$!%\*?&#^()\_+=-{}[]|:;"'<>,./)
+
+**Valid Examples:** `Admin@123`, `Customer@123`, `MyP@ssw0rd`  
+**Invalid Examples:** `admin123` (no uppercase/special), `Admin123` (no special), `Admin@` (too short/no digit)
 
 ### Products & Variants
 
@@ -231,6 +277,11 @@ Import files vào Postman:
 #### A. Guest Flow (No Authentication)
 
 ```
+0. Register New Account (Optional)
+   → Email, password (strong), full name
+   → Auto-login after registration
+   → Saves customer_token to environment
+
 1. Browse All Products
    → Saves product_id to environment
 
@@ -258,7 +309,9 @@ Import files vào Postman:
 #### B. Customer Flow (Authenticated)
 
 ```
-1. Customer Login
+1. Register or Login
+   → Register: POST /api/v1/auth/register
+   → Login: POST /api/v1/auth/login
    → Saves customer_token to environment
 
 2. Add Item to Cart (Customer)
@@ -399,10 +452,88 @@ Category (1) ────< (N) Product ─────< (N) ProductVariant ─�
 | `/api/v1/orders`                   | POST   | Guest/Customer | Create order              |
 | `/api/v1/orders`                   | GET    | Customer       | My orders                 |
 | `/api/v1/orders/{id}`              | GET    | Customer       | Order details             |
-| `/api/v1/public/orders/{id}`       | GET    | Public         | Track order (email)       |
+| `/api/v1/public/orders/{id}`       | GET    | Public         | Track order (HTML/JSON)   |
 | `/api/v1/orders/admin`             | GET    | Admin          | All orders                |
 | `/api/v1/orders/admin/{id}`        | GET    | Admin          | Any order details         |
 | `/api/v1/orders/admin/{id}/status` | PATCH  | Admin          | Update status             |
+
+### Order Tracking (Content Negotiation) 🆕
+
+**Strategy Pattern**: Cùng 1 endpoint nhưng trả về HTML hoặc JSON tùy client
+
+**Endpoint:** `GET /api/v1/public/orders/{orderId}?email={email}`
+
+#### 1️⃣ Browser (HTML View)
+
+```bash
+# Open in browser
+http://localhost:8080/api/v1/public/orders/faecce20-9ca3-4126-8c35-cc136344a474?email=customer@example.com
+
+# Returns: Professional HTML page with order details
+# - Customer info (name, email, phone, address)
+# - Order status badge (color-coded)
+# - Product items table
+# - Payment information
+# - Responsive design (mobile-friendly)
+```
+
+**Features:**
+
+- ✅ Professional UI (Segoe UI font, clean layout)
+- ✅ Status badges (color-coded: PENDING=yellow, CONFIRMED=blue, PROCESSING=cyan, SHIPPED=green, DELIVERED=dark green)
+- ✅ Formatted currency (4,500,000 đ)
+- ✅ Responsive design (grid layout for mobile)
+- ✅ No authentication required (email verification)
+
+#### 2️⃣ API Client (JSON Response)
+
+```bash
+# Postman or curl
+curl -H "Accept: application/json" \
+  "http://localhost:8080/api/v1/public/orders/faecce20...?email=customer@example.com"
+
+# Returns JSON:
+{
+  "code": 200,
+  "message": "Success",
+  "data": {
+    "id": "faecce20-9ca3-4126-8c35-cc136344a474",
+    "customerName": "Guest Test User",
+    "status": "PENDING",
+    "totalAmount": 4500000.00,
+    "items": [...]
+  }
+}
+```
+
+**Architecture:**
+
+```java
+// Strategy 1: HTML View
+@Controller
+class PublicOrderViewController {
+    @GetMapping("/api/v1/public/orders/{orderId}")
+    String trackOrder(..., Model model) {
+        return "order-tracking"; // Thymeleaf template
+    }
+}
+
+// Strategy 2: JSON Response
+@RestController
+class PublicOrderController {
+    @GetMapping(value = "/{orderId}", produces = "application/json")
+    ResponseEntity<ApiResponse<OrderDTO>> trackOrder(...) {
+        return ResponseEntity.ok(...);
+    }
+}
+```
+
+**Spring MVC tự động chọn controller dựa trên:**
+
+- Browser request → `Accept: text/html` → HTML view
+- API request → `Accept: application/json` → JSON response
+
+---
 
 ### Product Filter API 🆕
 
@@ -481,7 +612,63 @@ if (userId != null) {
 }
 ```
 
-#### 3. Authorization Matrix
+#### 3. Email Templates (Thymeleaf)
+
+**Location:** `src/main/resources/templates/email/`
+
+```html
+<!-- order-confirmation.html -->
+- Professional dark theme (gray #1a1a1a + blue #0066cc) - Order summary (ID,
+total amount, payment method) - Items table (product name, SKU, size/color,
+quantity, price) - Tracking link button (→ HTML view) - Customer info (shipping
+address) - Footer with brand info
+
+<!-- order-status-update.html -->
+- Status change visualization (OLD → NEW with arrow) - Color-coded status badges
+- Tracking link - Professional footer
+```
+
+**Email Triggers:**
+
+| Event          | Template                 | Recipient      | Trigger Point        |
+| -------------- | ------------------------ | -------------- | -------------------- |
+| Order Created  | order-confirmation.html  | Customer email | After order creation |
+| Status Updated | order-status-update.html | Customer email | Admin updates status |
+
+**Example: Order Confirmation Email**
+
+```
+Subject: Xác nhận đơn hàng #faecce20
+
+┌─────────────────────────────────────┐
+│   XÁC NHẬN ĐÔN HÀNG                 │
+└─────────────────────────────────────┘
+
+Xin chào Guest Test User,
+
+Cảm ơn bạn đã đặt hàng tại Hung Hypebeast!
+
+Mã đơn hàng: faecce20-9ca3-4126-8c35-cc136344a474
+Tổng tiền: 4,500,000 đ
+Phương thức: COD
+
+┌─────────────────────────────────────┐
+│ CHI TIẾT SẢN PHẨM                   │
+├─────────────────────────────────────┤
+│ Air Jordan 1 High 'Chicago'         │
+│ SKU: AJ1-40-RB │ 40/RED_BLACK       │
+│ Số lượng: 1 │ Giá: 4,500,000 đ     │
+└─────────────────────────────────────┘
+
+[THEO DÕI ĐƠN HÀNG] ← Click để xem
+
+Địa chỉ giao hàng:
+123 Test Street, District 1, HCMC
+```
+
+---
+
+#### 4. Authorization Matrix
 
 | Endpoint            | Guest | Customer | Admin |
 | ------------------- | ----- | -------- | ----- |
