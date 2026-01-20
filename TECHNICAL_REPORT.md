@@ -11,7 +11,7 @@
 
 ## ABSTRACT
 
-Hệ thống E-Commerce Backend được phát triển trong **2 tuần** giải quyết vấn đề **overselling** cho Local Brand "Hung Hypebeast". Giải pháp chính: **Inventory Locking** với Pessimistic Lock + Reservation Table. Kết quả: **95% completion**. Tech: Spring Boot 4.0.1, PostgreSQL 16, JWT, Jakarta Validation.
+Hệ thống E-Commerce Backend được phát triển trong **2 tuần** giải quyết vấn đề **overselling** cho Brand "Hung Hypebeast". Giải pháp chính: **Inventory Locking** với Pessimistic Lock + Reservation Table. Kết quả: **95% completion**. Tech: Spring Boot 4.0.1, PostgreSQL 16, JWT, Jakarta Validation.
 
 ---
 
@@ -22,7 +22,7 @@ Hệ thống E-Commerce Backend được phát triển trong **2 tuần** giải
 **6 yêu cầu chính:**
 
 1. **Catalog**: Quản lý variants (Size/Màu), phân trang, lọc giá
-2. **Cart**: Guest + Customer, check tồn kho sơ bộ
+2. **Cart**: Guest + Customer, check tồn kho
 3. **Inventory Locking (CRITICAL)**: Giữ hàng 10-15 phút khi checkout
 4. **Payment**: COD + SePay (defer Phase 2)
 5. **Order Tracking**: Email link, không cần đăng nhập
@@ -30,18 +30,18 @@ Hệ thống E-Commerce Backend được phát triển trong **2 tuần** giải
 
 ### 1.2. MoSCoW Prioritization
 
-| Must-Have (100% Done)            | Nice-to-Have (Phase 2) |
-| -------------------------------- | ---------------------- |
-| Authentication (JWT + Roles)     | SePay Integration      |
-| Strong Password Validation       | Email Async Queue      |
-| Product Catalog + Variants       |                        |
-| Guest/Customer Cart              |                        |
-| **Inventory Locking** (Advanced) |                        |
-| Order Management                 |                        |
-| Public Tracking (UUID)           |                        |
-| Email Notifications              |                        |
-| Admin API                        |                        |
-| Swagger UI                       |                        |
+| Must-Have (100% Done)        | Nice-to-Have (Phase 2) |
+| ---------------------------- | ---------------------- |
+| Authentication (JWT + Roles) | SePay Integration      |
+| Strong Password Validation   | Email Async Queue      |
+| Product Catalog + Variants   |                        |
+| Guest/Customer Cart          |                        |
+| **Inventory Locking**        |                        |
+| Order Management             |                        |
+| Public Tracking (UUID)       |                        |
+| Email Notifications          |                        |
+| Admin API                    |                        |
+| Swagger UI                   |                        |
 
 **Completion: 95%** - Defer SePay do time constraint
 
@@ -93,15 +93,6 @@ carts (user_id | session_id) → cart_items (1:N)
 inventory_reservations (expires_at, status: ACTIVE/CONFIRMED/EXPIRED)
 ```
 
-**Performance Indexes:**
-
-```sql
-idx_reservations_variant_status (variant_id, status)
-idx_reservations_expires (expires_at, status)
-idx_orders_tracking (tracking_number)
-idx_carts_session (session_id, status)
-```
-
 ### 2.3. API Endpoints
 
 | Category     | Endpoints                                           | Auth             | Key Features               |
@@ -127,7 +118,7 @@ idx_carts_session (session_id, status)
 
 ## 3. GIẢI PHÁP KỸ THUẬT CHÍNH
 
-### 3.1. Inventory Locking (CRITICAL - Giải quyết Overselling)
+### 3.1. Inventory Locking
 
 **Problem:** Race Condition - 2 users cùng mua "last item"
 
@@ -157,20 +148,7 @@ _Hình 2: Sequence Diagram - Race Condition Prevention_
 5. COMMIT (release lock)
 6. Customer B bị block → tính lại Available = 0 → REJECT
 
-**Cleanup:** Scheduled task xóa reservations expired > 15 phút
-
-### 3.2. Strong Password Validation
-
-**Challenge:** Security - user dùng weak passwords
-
-**Solution:** Custom Jakarta Validation annotation
-
-```java
-@StrongPassword  // Auto-validate with @Valid
-private String password;
-```
-
-**Requirements:** Min 8 chars + uppercase + lowercase + digit + special char
+**Cleanup:** Scheduled task xóa reservations expired
 
 ### 3.3. Email System
 
@@ -250,12 +228,10 @@ Accept: application/json → JSON API
 
 ### 5.4. Phase 2 Roadmap
 
-| Priority | Feature                    | Estimate |
-| -------- | -------------------------- | -------- |
-| **High** | SePay Integration          | 5 days   |
-| **High** | Email Async Queue          | 3 days   |
-| Medium   | Redis Caching              | 2 days   |
-| Low      | Advanced Filters, Wishlist | TBD      |
+| Priority | Feature           | Estimate |
+| -------- | ----------------- | -------- |
+| **High** | SePay Integration | 5 days   |
+| Medium   | Redis Caching     | 2 days   |
 
 ---
 
@@ -269,26 +245,17 @@ Database: PostgreSQL 16
 Security: Spring Security 6, JWT
 Validation: Jakarta Validation 3.0
 Email: JavaMailSender, Thymeleaf
-Build: Gradle 8.12
+Build: Maven 3.9+
 Testing: Postman
 ```
 
-### B. Deployment Checklist
-
-- [ ] PostgreSQL 16+ setup
-- [ ] Configure application.properties (DB, JWT, Email)
-- [ ] Generate Gmail App Password
-- [ ] Build: `./gradlew clean build`
-- [ ] Run: `./gradlew bootRun`
-- [ ] Access: http://localhost:8080/swagger-ui.html
-
-### C. References
+### B. References
 
 1. Spring Boot Documentation - https://spring.io/projects/spring-boot
 2. PostgreSQL 16 Docs - https://www.postgresql.org/docs/16/
 3. Jakarta Validation Spec - https://jakarta.ee/specifications/bean-validation/3.0/
 4. Assignment Instruction - FPT Software Academy
-5. Client Requirements - Email from Anh Hùng (Hung Hypebeast)
+5. Client Requirements - Email from Anh Hùng
 
 ---
 

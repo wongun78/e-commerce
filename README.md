@@ -27,7 +27,7 @@ Hệ thống Backend E-Commerce (Headless) cho Local Brand "Hùng Hype Beast", p
 | Component  | Version  | Required                |
 | ---------- | -------- | ----------------------- |
 | Java       | 21 (LTS) | ✅                      |
-| Gradle     | 8.12     | ✅ (wrapper included)   |
+| Maven      | 3.9+     | ✅ (wrapper included)   |
 | PostgreSQL | 16+      | ✅                      |
 | Docker     | Latest   | ⚠️ (recommended for DB) |
 | Postman    | Latest   | 📝 (for testing)        |
@@ -140,16 +140,16 @@ Create order → Check email inbox → Nhận email xác nhận đơn hàng vớ
 
 ```bash
 # Build project
-./gradlew clean build
+./mvnw clean package
 
 # Run application
-./gradlew bootRun
+./mvnw spring-boot:run
 ```
 
 **Alternative: Run compiled JAR**
 
 ```bash
-java -jar build/libs/e-commerce-0.0.1-SNAPSHOT.jar
+java -jar target/e-commerce-0.0.1-SNAPSHOT.jar
 ```
 
 ### 6. Verify Application is Running
@@ -403,7 +403,7 @@ newman run E-Commerce-API.postman_collection.json \
 | ORM               | Spring Data JPA + Hibernate |
 | Security          | Spring Security + JWT       |
 | API Documentation | Swagger/OpenAPI 3.0         |
-| Build Tool        | Gradle 8.12                 |
+| Build Tool        | Maven 3.9+                  |
 | Mapping           | MapStruct 1.6.3             |
 
 ### Database Schema (ERD)
@@ -685,11 +685,11 @@ psql -h localhost -U postgres -d ecommerce
 
 ```bash
 # Clean build
-./gradlew clean
-rm -rf .gradle build
+./mvnw clean
+rm -rf target
 
 # Rebuild
-./gradlew build --refresh-dependencies
+./mvnw clean install -U
 ```
 
 ### Issue 4: JWT Token Invalid
@@ -729,7 +729,9 @@ e-commerce/
 │   └── templates/email/      # Email templates
 │
 ├── docker-compose.yml
-├── build.gradle.kts
+├── pom.xml
+├── mvnw
+├── mvnw.cmd
 ├── E-Commerce-API.postman_collection.json
 ├── E-Commerce.postman_environment.json
 └── README.md (this file)
