@@ -1,6 +1,8 @@
 package fpt.kiennt169.e_commerce.entities;
 
 import fpt.kiennt169.e_commerce.enums.OrderStatus;
+import fpt.kiennt169.e_commerce.enums.PaymentMethod;
+import fpt.kiennt169.e_commerce.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -55,12 +57,15 @@ public class Order extends BaseEntity {
     @Builder.Default
     private OrderStatus status = OrderStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", length = 50)
-    private String paymentMethod; 
+    private PaymentMethod paymentMethod;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", length = 50)
     @Builder.Default
-    private String paymentStatus = "PENDING"; 
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();

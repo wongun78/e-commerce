@@ -1,5 +1,6 @@
 package fpt.kiennt169.e_commerce.entities;
 
+import fpt.kiennt169.e_commerce.enums.ReservationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -37,9 +38,10 @@ public class InventoryReservation extends BaseEntity {
     @Column(name = "expiry_time", nullable = false)
     private LocalDateTime expiryTime;
 
-    @Column(name = "status", length = 50)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 50, nullable = false)
     @Builder.Default
-    private String status = "ACTIVE";
+    private ReservationStatus status = ReservationStatus.ACTIVE;
 
     @PrePersist
     public void prePersist() {
@@ -49,12 +51,12 @@ public class InventoryReservation extends BaseEntity {
     }
 
     public void complete() {
-        this.status = "COMPLETED";
+        this.status = ReservationStatus.COMPLETED;
     }
 
     public void expire() {
-        if ("ACTIVE".equals(status) && LocalDateTime.now().isAfter(expiryTime)) {
-            this.status = "EXPIRED";
+        if (status == ReservationStatus.ACTIVE && LocalDateTime.now().isAfter(expiryTime)) {
+            this.status = ReservationStatus.EXPIRED;
         }
     }
 }

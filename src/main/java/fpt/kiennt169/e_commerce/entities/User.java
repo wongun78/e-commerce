@@ -1,5 +1,6 @@
 package fpt.kiennt169.e_commerce.entities;
 
+import fpt.kiennt169.e_commerce.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -32,13 +33,14 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "full_name", length = 255)
     private String fullName;
 
-    @Column(name = "role", length = 50)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", length = 50, nullable = false)
     @Builder.Default
-    private String role = "ROLE_CUSTOMER";
+    private UserRole role = UserRole.CUSTOMER;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role));
+        return List.of(new SimpleGrantedAuthority(role.getAuthority()));
     }
 
     @Override
