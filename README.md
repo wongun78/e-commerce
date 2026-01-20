@@ -1,47 +1,196 @@
-# E-Commerce Backend System - Phase 1
+# E-Commerce Backend System (Phase 1)
 
-## 📋 Tổng Quan
-
-Hệ thống Backend E-Commerce (Headless) cho Local Brand "Hùng Hype Beast", phát triển với Spring Boot 4.0.1, Java 21 và PostgreSQL 16.
-
-### Tính Năng Chính
-
-- ✅ **Authentication & Authorization**: JWT-based với role-based access control (Admin, Customer)
-- ✅ **User Registration**: Strong password validation (8+ chars, uppercase, lowercase, digit, special char)
-- ✅ **Product Management**: Browse products, variants, categories (Public access)
-- ✅ **Product Filters**: Filter by category, price range, search (JPA Specification)
-- ✅ **Shopping Cart**: Guest (session-based) & Customer (authenticated)
-- ✅ **Stock Reservation**: Pessimistic locking, giữ hàng 15 phút
-- ✅ **Order Management**: Create, track, update status
-- ✅ **Public Order Tracking**: Theo dõi đơn hàng bằng email (HTML view hoặc JSON)
-- ✅ **Email Notifications**: Gmail SMTP, Thymeleaf templates (order confirmation, status updates)
-- ✅ **Admin Operations**: Quản lý đơn hàng, cập nhật trạng thái
-- ✅ **API Documentation**: Swagger UI
+Project: Backend E-Commerce cho Local Brand "Hung Hypebeast"  
+Author: KienNT169 - Backend Developer  
+Tech Stack: Spring Boot 4.0.1, Java 21, PostgreSQL 16  
+Version: 1.0.0  
+Status: Phase 1 Complete (95%)
 
 ---
 
-## 🚀 Cài Đặt & Chạy Ứng Dụng
+## ABSTRACT
 
-### 1. Yêu Cầu Hệ Thống
+Hệ thống E-Commerce Backend được phát triển trong 2 tuần để giải quyết vấn đề overselling cho Brand "Hung Hypebeast". Giải pháp chính sử dụng Inventory Locking với Pessimistic Lock và Reservation Table. Kết quả đạt 95% completion với core features hoàn chỉnh.
 
-| Component  | Version  | Required                |
-| ---------- | -------- | ----------------------- |
-| Java       | 21 (LTS) | ✅                      |
-| Maven      | 3.9+     | ✅ (wrapper included)   |
-| PostgreSQL | 16+      | ✅                      |
-| Docker     | Latest   | ⚠️ (recommended for DB) |
-| Postman    | Latest   | 📝 (for testing)        |
+---
 
-### 2. Clone Repository
+## 1. YÊU CẦU & PHẠM VI DỰ ÁN
+
+### 1.1. Yêu cầu khách hàng
+
+6 yêu cầu chính từ email của anh Hùng (Founder):
+
+1. Catalog: Quản lý variants (Size/Màu), phân trang, lọc giá
+2. Cart: Guest + Customer, check tồn kho
+3. Inventory Locking (CRITICAL): Giữ hàng 10-15 phút khi checkout
+4. Payment: COD + SePay (defer Phase 2)
+5. Order Tracking: Email link, không cần đăng nhập
+6. Admin: Xem đơn + đổi status
+
+### 1.2. MoSCoW Prioritization
+
+Must-Have (100% Done):
+
+- Authentication (JWT + Roles)
+- Strong Password Validation
+- Product Catalog + Variants
+- Guest/Customer Cart
+- Inventory Locking
+- Order Management
+- Public Tracking (UUID)
+- Email Notifications
+- Admin API
+- Swagger UI
+
+Nice-to-Have (Phase 2):
+
+- SePay Integration
+- Email Async Queue
+
+Completion: 95% (defer SePay do time constraint)
+
+---
+
+## 2. THIẾT KẾ HỆ THỐNG
+
+### 2.1. Entity Relationship Diagram
+
+ERD diagram: ./images/ERD_Diagram.png
+
+Điểm nhấn thiết kế:
+
+- Hybrid ID Strategy: Auto-increment (users, products) vs UUID (orders, carts, reservations)
+- Product Variants: Separate table để track stock cho từng Size/Màu
+- Inventory Reservations: Bảng riêng giữ hàng 15 phút, không lock trực tiếp product_variants
+- Nullable user_id: Hỗ trợ guest checkout (orders.user_id = NULL)
+
+Key Tables:
+
+```
+users → orders (1:N, nullable user_id)
+categories → products → product_variants (1:N:N)
+carts (user_id | session_id) → cart_items (1:N)
+inventory_reservations (expires_at, status: ACTIVE/CONFIRMED/EXPIRED)
+```
+
+### 2.2. Tech Stack
+
+Backend Framework: Spring Boot 4.0.1  
+Language: Java 21 (LTS)  
+Database: PostgreSQL 16  
+Security: Spring Security 6 + JWT  
+Validation: Jakarta Validation 3.0  
+Email: JavaMailSender + Thymeleaf  
+Build Tool: Maven 3.9+  
+Mapping: MapStruct 1.6.3  
+Testing: Postman Collection
+
+---
+
+## 3. GIẢI PHÁP KỸ THUẬT CHÍNH
+
+### 3.1. Inventory Locking - Giải quyết Race Condition
+
+Problem: 2 users cùng mua "last item" → overselling
+
+Solution: 3-Layer Protection
+
+Layer 1: Database Lock
+
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+ProductVariant findByIdWithLock(Long id);
+```
+
+Layer 2: Soft Reservation
+
+```java
+int available = stock - SUM(active_reservations);
+```
+
+Layer 3: Transaction Isolation
+
+```java
+@Transactional(isolation = Isolation.READ_COMMITTED)
+```
+
+Sequence Diagram: ./images/Sequence_Diagram_Inventory_Locking.png
+
+Luồng xử lý:
+
+1. Customer A → POST /checkout/prepare
+2. START TRANSACTION + SELECT ... FOR UPDATE (lock row)
+3. Calculate: Available = Stock (1) - Active Reservations (0) = 1
+4. INSERT reservation (expires_at = NOW + 15m)
+5. COMMIT (release lock)
+6. Customer B bị block → tính lại Available = 0 → REJECT
+
+Cleanup: Scheduled task chạy mỗi 5 phút để expire old reservations
+
+### 3.2. Public Order Tracking
+
+Challenge: Khách track order mà không cần login
+
+Solution: UUID + Email Verification + Content Negotiation
+
+```
+GET /api/v1/public/orders/{uuid}?email=customer@example.com
+Accept: text/html → HTML view
+Accept: application/json → JSON API
+```
+
+Security:
+
+- UUID order ID (không đoán được)
+- Email verification (chỉ người có email)
+- Rate limiting ready
+
+### 3.3. Email System
+
+Challenge: Order confirmation emails không làm crash order creation
+
+Solution: Strategy Pattern + Conditional Bean
+
+```java
+// Production
+@ConditionalOnProperty(name = "spring.mail.enabled", havingValue = "true")
+public class EmailServiceImpl { }
+
+// Development (no-op)
+@ConditionalOnProperty(name = "spring.mail.enabled", havingValue = "false")
+public class NoOpEmailService { }
+```
+
+Result:
+
+- Non-blocking (order creation NEVER fails)
+- Dev-friendly (no SMTP required locally)
+- Professional HTML templates (Thymeleaf)
+
+---
+
+## 4. CÀI ĐẶT & CHẠY ỨNG DỤNG
+
+### 4.1. Yêu Cầu Hệ Thống
+
+| Component  | Version  | Note               |
+| ---------- | -------- | ------------------ |
+| Java       | 21 (LTS) | Required           |
+| Maven      | 3.9+     | Wrapper included   |
+| PostgreSQL | 16+      | Required           |
+| Docker     | Latest   | Recommended for DB |
+| Postman    | Latest   | For testing        |
+
+### 4.2. Clone Repository
 
 ```bash
 git clone https://github.com/wongun78/e-commerce.git
 cd e-commerce
 ```
 
-### 3. Cài Đặt Database (PostgreSQL)
+### 4.3. Cài Đặt Database (PostgreSQL)
 
-#### Option A: Docker (Recommended)
+Option A: Docker (Recommended)
 
 ```bash
 # Start PostgreSQL container
@@ -51,7 +200,7 @@ docker-compose up -d
 docker ps
 ```
 
-**File `docker-compose.yml`:**
+File docker-compose.yml:
 
 ```yaml
 services:
@@ -71,7 +220,7 @@ volumes:
   postgres_data:
 ```
 
-#### Option B: Local PostgreSQL Installation
+Option B: Local PostgreSQL Installation
 
 ```bash
 # macOS (Homebrew)
@@ -84,9 +233,9 @@ CREATE DATABASE ecommerce;
 \q
 ```
 
-### 4. Configuration
+### 4.4. Configuration
 
-Kiểm tra file `src/main/resources/application.properties`:
+File src/main/resources/application.properties:
 
 ```properties
 # Database Configuration
@@ -115,28 +264,24 @@ app.order.tracking.base-url=http://localhost:8080/api/v1/public/orders
 server.port=8080
 ```
 
-#### 📧 Cấu Hình Email (REQUIRED for email notifications)
+Cấu hình Email (Required cho email notifications):
 
-**Bước 1: Tạo Gmail App Password**
+Bước 1: Tạo Gmail App Password
 
 1. Vào [Google Account Security](https://myaccount.google.com/security)
 2. Bật **2-Step Verification**
 3. Vào **App passwords** → Generate new password
 4. Chọn **Mail** + **Other (Custom name)** → Nhập "E-Commerce API"
-5. Copy **16-digit password** (vd: `abcd efgh ijkl mnop`)
+5. Copy 16-digit password (vd: abcd efgh ijkl mnop)
 
-**Bước 2: Update application.properties**
+Bước 2: Update application.properties
 
 ```properties
 spring.mail.username=your-email@gmail.com
 spring.mail.password=abcd efgh ijkl mnop
 ```
 
-**Bước 3: Test Email**
-
-Create order → Check email inbox → Nhận email xác nhận đơn hàng với professional template
-
-### 5. Build & Run Application
+### 4.5. Build & Run Application
 
 ```bash
 # Build project
@@ -146,13 +291,13 @@ Create order → Check email inbox → Nhận email xác nhận đơn hàng vớ
 ./mvnw spring-boot:run
 ```
 
-**Alternative: Run compiled JAR**
+Alternative: Run compiled JAR
 
 ```bash
 java -jar target/e-commerce-0.0.1-SNAPSHOT.jar
 ```
 
-### 6. Verify Application is Running
+### 4.6. Verify Application is Running
 
 ```bash
 # Check health
@@ -164,18 +309,18 @@ curl http://localhost:8080/actuator/health
 
 ---
 
-## 📊 Seed Dữ Liệu Mẫu (Auto-Initialized)
+## 5. DỮ LIỆU MẪU
 
-Application tự động seed dữ liệu khi khởi động (nếu database trống):
+Application tự động seed dữ liệu khi khởi động (nếu database trống).
 
-### Users (Mật khẩu mặc định cho tất cả: tương ứng với role)
+Users (Mật khẩu mặc định cho tất cả: tương ứng với role):
 
 | Email                   | Password     | Role          | Description   |
 | ----------------------- | ------------ | ------------- | ------------- |
 | admin@hunghypebeast.com | Admin@123    | ROLE_ADMIN    | Admin account |
 | customer@example.com    | Customer@123 | ROLE_CUSTOMER | Test customer |
 
-**🔐 Password Requirements (Strong Password Validation):**
+Password Requirements (Strong Password Validation):
 
 - Minimum 8 characters
 - At least 1 uppercase letter (A-Z)
@@ -183,10 +328,10 @@ Application tự động seed dữ liệu khi khởi động (nếu database tr�
 - At least 1 digit (0-9)
 - At least 1 special character (@$!%\*?&#^()\_+=-{}[]|:;"'<>,./)
 
-**Valid Examples:** `Admin@123`, `Customer@123`, `MyP@ssw0rd`  
-**Invalid Examples:** `admin123` (no uppercase/special), `Admin123` (no special), `Admin@` (too short/no digit)
+Valid Examples: Admin@123, Customer@123, MyP@ssw0rd  
+Invalid Examples: admin123 (no uppercase/special), Admin123 (no special), Admin@ (too short/no digit)
 
-### Products & Variants
+Products & Variants:
 
 ```
 1. LAST ITEM (Product ID: 1)
@@ -209,35 +354,27 @@ Application tự động seed dữ liệu khi khởi động (nếu database tr�
 
 ---
 
-## 📡 API Documentation
+## 6. API DOCUMENTATION
 
-### Swagger UI
-
-```
+### 6.1. Swagger UI
 
 URL: http://localhost:8080/swagger-ui.html
 
-```
-
-### Postman Collection
+### 6.2. Postman Collection
 
 Import files vào Postman:
 
 1. **Collection**: `E-Commerce-API.postman_collection.json`
-2. **Environment**: `E-Commerce.postman_environment.json`
+2. Environment: E-Commerce.postman_environment.json
 
-**Collection bao gồm:**
+Collection bao gồm:
 
 - 9 folders với 30+ requests
 - Pre-request scripts tự động generate Guest ID
 - Test scripts tự động lưu tokens, IDs vào environment
 - Full CRUD operations cho tất cả roles
 
----
-
-## 🧪 Testing Guide với Postman
-
-### Step 1: Import Collection & Environment
+### 6.3. API Endpoints Summary
 
 1. Mở Postman
 2. Click **Import** → Chọn `E-Commerce-API.postman_collection.json`
@@ -391,7 +528,7 @@ newman run E-Commerce-API.postman_collection.json \
 
 ---
 
-## 🏗️ Architecture & Design
+## Architecture & Design
 
 ### Tech Stack
 
@@ -463,11 +600,11 @@ http://localhost:8080/api/v1/public/orders/faecce20-9ca3-4126-8c35-cc136344a474?
 
 **Features:**
 
-- ✅ Professional UI (Segoe UI font, clean layout)
-- ✅ Status badges (color-coded: PENDING=yellow, CONFIRMED=blue, PROCESSING=cyan, SHIPPED=green, DELIVERED=dark green)
-- ✅ Formatted currency (4,500,000 đ)
-- ✅ Responsive design (grid layout for mobile)
-- ✅ No authentication required (email verification)
+- Professional UI (Segoe UI font, clean layout)
+- Status badges (color-coded: PENDING=yellow, CONFIRMED=blue, PROCESSING=cyan, SHIPPED=green, DELIVERED=dark green)
+- Formatted currency (4,500,000 đ)
+- Responsive design (grid layout for mobile)
+- No authentication required (email verification)
 
 #### 2️⃣ API Client (JSON Response)
 
@@ -552,7 +689,7 @@ curl "http://localhost:8080/api/v1/products?minPrice=4000000&maxPrice=5000000&se
 curl "http://localhost:8080/api/v1/products?sort=basePrice,asc"
 ```
 
-**📚 Full Documentation:** See [PRODUCT-FILTER-GUIDE.md](PRODUCT-FILTER-GUIDE.md)
+**Full Documentation:** See [PRODUCT-FILTER-GUIDE.md](PRODUCT-FILTER-GUIDE.md)
 
 ### Key Design Decisions
 
@@ -612,99 +749,7 @@ address) - Footer with brand info
 | Order Created  | order-confirmation.html  | Customer email | After order creation |
 | Status Updated | order-status-update.html | Customer email | Admin updates status |
 
-**Example: Order Confirmation Email**
-
-```
-Subject: Xác nhận đơn hàng #faecce20
-
-┌─────────────────────────────────────┐
-│   XÁC NHẬN ĐÔN HÀNG                 │
-└─────────────────────────────────────┘
-
-Xin chào Guest Test User,
-
-Cảm ơn bạn đã đặt hàng tại Hung Hypebeast!
-
-Mã đơn hàng: faecce20-9ca3-4126-8c35-cc136344a474
-Tổng tiền: 4,500,000 đ
-Phương thức: COD
-
-┌─────────────────────────────────────┐
-│ CHI TIẾT SẢN PHẨM                   │
-├─────────────────────────────────────┤
-│ Air Jordan 1 High 'Chicago'         │
-│ SKU: AJ1-40-RB │ 40/RED_BLACK       │
-│ Số lượng: 1 │ Giá: 4,500,000 đ     │
-└─────────────────────────────────────┘
-
-[THEO DÕI ĐƠN HÀNG] ← Click để xem
-
-Địa chỉ giao hàng:
-123 Test Street, District 1, HCMC
-```
-
----
-
-#### 4. Authorization Matrix
-
-| Endpoint            | Guest | Customer | Admin |
-| ------------------- | ----- | -------- | ----- |
-| Browse Products     | ✅    | ✅       | ✅    |
-| Cart Operations     | ✅    | ✅       | ✅    |
-| Create Order        | ✅    | ✅       | ✅    |
-| View Own Orders     | ❌    | ✅       | ✅    |
-| View All Orders     | ❌    | ❌       | ✅    |
-| Update Order Status | ❌    | ❌       | ✅    |
-
----
-
-## 🐛 Troubleshooting
-
-### Issue 1: Port 8080 Already in Use
-
-```bash
-# Find process using port 8080
-lsof -i :8080
-
-# Kill process
-kill -9 <PID>
-```
-
-### Issue 2: Database Connection Failed
-
-```bash
-# Check PostgreSQL is running
-docker ps  # or
-brew services list
-
-# Test connection
-psql -h localhost -U postgres -d ecommerce
-```
-
-### Issue 3: Build Failed (Lombok/MapStruct)
-
-```bash
-# Clean build
-./mvnw clean
-rm -rf target
-
-# Rebuild
-./mvnw clean install -U
-```
-
-### Issue 4: JWT Token Invalid
-
-```bash
-# Check token expiration (24 hours)
-# Re-login to get fresh token
-
-# Verify JWT secret in application.properties
-# Must be minimum 256 bits for HS256
-```
-
----
-
-## 📦 Project Structure
+## Project Structure
 
 ```
 e-commerce/
@@ -739,7 +784,7 @@ e-commerce/
 
 ---
 
-## 📈 Performance & Scalability
+## Performance & Scalability
 
 ### Current Capacity
 
@@ -758,16 +803,16 @@ e-commerce/
 
 ---
 
-## 🔐 Security Considerations
+## Security Considerations
 
 ### Implemented
 
-- ✅ JWT token authentication (24h expiration)
-- ✅ Password hashing (BCrypt)
-- ✅ Role-based access control (RBAC)
-- ✅ CORS configuration
-- ✅ SQL injection prevention (JPA Prepared Statements)
-- ✅ Input validation (@Valid, @NotNull, @Size)
+- JWT token authentication (24h expiration)
+- Password hashing (BCrypt)
+- Role-based access control (RBAC)
+- CORS configuration
+- SQL injection prevention (JPA Prepared Statements)
+- Input validation (@Valid, @NotNull, @Size)
 
 ### Recommendations for Production
 
@@ -781,7 +826,7 @@ e-commerce/
 
 ---
 
-## 📞 Contact & Support
+## Contact & Support
 
 **Developer**: Kien Nguyen (kiennt169)  
 **Email**: kiennt169@fpt.edu.vn  
@@ -793,31 +838,11 @@ e-commerce/
 
 ---
 
-## 📝 License
+## License
 
 This project is developed for educational purposes as part of FPT University Backend Development Course.
 
 ---
-
-## 🎯 Achievement Summary
-
-### ✅ Phase 1 Completed (100%)
-
-- [x] Database design with 11 entities
-- [x] 7 JPA repositories with custom queries
-- [x] 18 DTOs with validation
-- [x] MapStruct mappers for entity-DTO conversion
-- [x] JWT security with role-based access
-- [x] 8 REST controllers with 30+ endpoints
-- [x] Stock reservation system (15 min pessimistic locking)
-- [x] Auto-cleanup scheduler for expired reservations
-- [x] Email notifications (NoOp implementation)
-- [x] Swagger API documentation
-- [x] i18n support (English/Vietnamese)
-- [x] Exception handling with custom responses
-- [x] Postman collection with 30+ requests
-- [x] 100% test coverage for all roles
-- [x] Comprehensive README documentation
 
 **Last Updated**: January 14, 2026  
 **Version**: 1.0.0 (Phase 1 Complete)
