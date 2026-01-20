@@ -13,7 +13,7 @@ public class InventoryScheduler {
 
     private final InventoryService inventoryService;
 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 60000)
     public void cleanupExpiredReservations() {
         log.debug("Running scheduled cleanup of expired reservations");
         try {

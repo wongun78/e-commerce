@@ -2,6 +2,7 @@ package fpt.kiennt169.e_commerce.services.impl;
 
 import fpt.kiennt169.e_commerce.entities.InventoryReservation;
 import fpt.kiennt169.e_commerce.entities.ProductVariant;
+import fpt.kiennt169.e_commerce.enums.ReservationStatus;
 import fpt.kiennt169.e_commerce.exceptions.InsufficientStockException;
 import fpt.kiennt169.e_commerce.repositories.InventoryReservationRepository;
 import fpt.kiennt169.e_commerce.repositories.ProductVariantRepository;
@@ -47,7 +48,7 @@ public class InventoryServiceImpl implements InventoryService {
                 .quantity(quantity)
                 .sessionId(sessionId)
                 .expiryTime(LocalDateTime.now().plusMinutes(reservationExpiryMinutes))
-                .status("ACTIVE")
+                .status(ReservationStatus.ACTIVE)
                 .build();
 
         reservationRepository.save(reservation);
@@ -69,7 +70,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.debug("Confirming stock for session: {}", sessionId);
 
         List<InventoryReservation> reservations = reservationRepository
-                .findBySessionIdAndStatus(sessionId, "ACTIVE");
+                .findBySessionIdAndStatus(sessionId, ReservationStatus.ACTIVE);
 
         for (InventoryReservation reservation : reservations) {
             ProductVariant variant = variantRepository.findByIdWithLock(reservation.getProductVariant().getId())

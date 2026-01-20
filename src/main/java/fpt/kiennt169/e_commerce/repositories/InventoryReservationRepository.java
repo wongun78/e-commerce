@@ -1,6 +1,7 @@
 package fpt.kiennt169.e_commerce.repositories;
 
 import fpt.kiennt169.e_commerce.entities.InventoryReservation;
+import fpt.kiennt169.e_commerce.enums.ReservationStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -25,9 +26,9 @@ public interface InventoryReservationRepository extends JpaRepository<InventoryR
            "WHERE ir.productVariant.id = :variantId AND ir.status = 'ACTIVE'")
     int getTotalReservedQuantity(@Param("variantId") Long variantId);
     
-    List<InventoryReservation> findBySessionIdAndStatus(String sessionId, String status);
+    List<InventoryReservation> findBySessionIdAndStatus(String sessionId, ReservationStatus status);
     
-    long countBySessionIdAndStatus(String sessionId, String status);
+    long countBySessionIdAndStatus(String sessionId, ReservationStatus status);
     
     @Query("SELECT ir FROM InventoryReservation ir " +
            "WHERE ir.expiryTime < :currentTime AND ir.status = 'ACTIVE'")

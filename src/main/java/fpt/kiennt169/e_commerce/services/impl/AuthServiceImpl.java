@@ -4,6 +4,7 @@ import fpt.kiennt169.e_commerce.dtos.auth.AuthResponse;
 import fpt.kiennt169.e_commerce.dtos.auth.LoginRequest;
 import fpt.kiennt169.e_commerce.dtos.auth.RegisterRequest;
 import fpt.kiennt169.e_commerce.entities.User;
+import fpt.kiennt169.e_commerce.enums.UserRole;
 import fpt.kiennt169.e_commerce.exceptions.BadRequestException;
 import fpt.kiennt169.e_commerce.repositories.UserRepository;
 import fpt.kiennt169.e_commerce.services.AuthService;
@@ -48,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
         );
 
         User user = (User) authentication.getPrincipal();
-        String token = tokenService.generateToken(user.getId(), user.getEmail(), Set.of(user.getRole()));
+        String token = tokenService.generateToken(user.getId(), user.getEmail(), Set.of(user.getRole().getAuthority()));
 
         log.info("User logged in successfully: {}", user.getEmail());
 
@@ -59,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
                         .id(user.getId())
                         .email(user.getEmail())
                         .fullName(user.getFullName())
-                        .roles(Set.of(user.getRole()))
+                        .roles(Set.of(user.getRole().getAuthority()))
                         .build()
         );
     }
@@ -77,13 +78,13 @@ public class AuthServiceImpl implements AuthService {
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .role("ROLE_CUSTOMER")
+                .role(UserRole.CUSTOMER)
                 .build();
 
         userRepository.save(newUser);
         log.info("User registered successfully: {}", newUser.getEmail());
 
-        String token = tokenService.generateToken(newUser.getId(), newUser.getEmail(), Set.of(newUser.getRole()));
+        String token = tokenService.generateToken(newUser.getId(), newUser.getEmail(), Set.of(newUser.getRole().getAuthority()));
 
         return AuthResponse.of(
                 token,
@@ -92,7 +93,7 @@ public class AuthServiceImpl implements AuthService {
                         .id(newUser.getId())
                         .email(newUser.getEmail())
                         .fullName(newUser.getFullName())
-                        .roles(Set.of(newUser.getRole()))
+                        .roles(Set.of(newUser.getRole().getAuthority()))
                         .build()
         );
     }

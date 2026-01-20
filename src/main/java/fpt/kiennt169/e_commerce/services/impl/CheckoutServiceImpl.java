@@ -4,6 +4,7 @@ import fpt.kiennt169.e_commerce.dtos.checkout.CheckoutPrepareResponse;
 import fpt.kiennt169.e_commerce.entities.Cart;
 import fpt.kiennt169.e_commerce.entities.CartItem;
 import fpt.kiennt169.e_commerce.entities.ProductVariant;
+import fpt.kiennt169.e_commerce.enums.ReservationStatus;
 import fpt.kiennt169.e_commerce.exceptions.BadRequestException;
 import fpt.kiennt169.e_commerce.repositories.CartRepository;
 import fpt.kiennt169.e_commerce.repositories.InventoryReservationRepository;
@@ -97,7 +98,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         log.debug("Verifying reservation: sessionId={}", reservationSessionId);
         
         long activeReservations = reservationRepository
-                .countBySessionIdAndStatus(reservationSessionId, "ACTIVE");
+                .countBySessionIdAndStatus(reservationSessionId, ReservationStatus.ACTIVE);
         
         boolean isValid = activeReservations > 0;
         log.debug("Reservation valid: {}", isValid);

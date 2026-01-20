@@ -6,6 +6,8 @@ import fpt.kiennt169.e_commerce.dtos.order.OrderListDTO;
 import fpt.kiennt169.e_commerce.dtos.order.UpdateOrderStatusRequest;
 import fpt.kiennt169.e_commerce.entities.*;
 import fpt.kiennt169.e_commerce.enums.OrderStatus;
+import fpt.kiennt169.e_commerce.enums.PaymentMethod;
+import fpt.kiennt169.e_commerce.enums.PaymentStatus;
 import fpt.kiennt169.e_commerce.exceptions.BadRequestException;
 import fpt.kiennt169.e_commerce.exceptions.ForbiddenException;
 import fpt.kiennt169.e_commerce.exceptions.ResourceNotFoundException;
@@ -67,8 +69,8 @@ public class OrderServiceImpl implements OrderService {
                 .customerEmail(request.getCustomerEmail())
                 .customerPhone(request.getCustomerPhone())
                 .shippingAddress(request.getShippingAddress())
-                .paymentMethod(request.getPaymentMethod())
-                .paymentStatus("PENDING")
+                .paymentMethod(PaymentMethod.valueOf(request.getPaymentMethod()))
+                .paymentStatus(PaymentStatus.PENDING)
                 .status(OrderStatus.PENDING)
                 .build();
 
