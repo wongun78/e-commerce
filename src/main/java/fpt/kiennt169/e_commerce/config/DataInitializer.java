@@ -1,6 +1,7 @@
 package fpt.kiennt169.e_commerce.config;
 
 import fpt.kiennt169.e_commerce.entities.*;
+import fpt.kiennt169.e_commerce.enums.UserRole;
 import fpt.kiennt169.e_commerce.repositories.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +48,7 @@ public class DataInitializer {
                     .email(adminEmail)
                     .passwordHash(passwordEncoder.encode("Admin@123")) // Strong password: Admin@123
                     .fullName("System Administrator")
-                    .role("ROLE_ADMIN")
+                    .role(UserRole.ADMIN)
                     .build();
             userRepository.save(admin);
             log.info("✓ Created admin user: {}", adminEmail);
@@ -60,7 +61,7 @@ public class DataInitializer {
                     .email(customerEmail)
                     .passwordHash(passwordEncoder.encode("Customer@123")) // Strong password: Customer@123
                     .fullName("Test Customer")
-                    .role("ROLE_CUSTOMER")
+                    .role(UserRole.CUSTOMER)
                     .build();
             userRepository.save(customer);
             log.info("✓ Created customer user: {}", customerEmail);

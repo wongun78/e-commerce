@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +43,7 @@ public class ProductController {
             @Parameter(description = "Search keyword in product name (case-insensitive)")
             @RequestParam(required = false) String search,
             
-            @PageableDefault(size = Constants.DEFAULT_PAGE_SIZE, sort = {Constants.DEFAULT_SORT_FIELD}, direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = Constants.DEFAULT_PAGE_SIZE, sort = {Constants.DEFAULT_SORT_FIELD}, direction = Direction.DESC) Pageable pageable) {
         
         if (categoryId == null && minPrice == null && maxPrice == null && search == null) {
             return ResponseEntity.ok(ApiResponse.success(productService.getAllProducts(pageable)));

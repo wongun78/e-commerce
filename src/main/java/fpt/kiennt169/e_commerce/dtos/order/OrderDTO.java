@@ -1,6 +1,8 @@
 package fpt.kiennt169.e_commerce.dtos.order;
 
 import fpt.kiennt169.e_commerce.enums.OrderStatus;
+import fpt.kiennt169.e_commerce.enums.PaymentMethod;
+import fpt.kiennt169.e_commerce.enums.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,8 +26,8 @@ public class OrderDTO {
     private String shippingAddress;
     private BigDecimal totalAmount;
     private OrderStatus status;
-    private String paymentMethod;
-    private String paymentStatus;
+    private PaymentMethod paymentMethod;
+    private PaymentStatus paymentStatus;
     private List<OrderItemDTO> items;
     private Integer totalItems;
     private LocalDateTime createdAt;
