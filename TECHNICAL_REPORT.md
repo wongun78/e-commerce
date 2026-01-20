@@ -37,7 +37,6 @@ Hệ thống E-COMMERCE BACKEND được phát triển trong 2 tuần để gi�
 | Order Management             |                   |
 | Public Tracking              |                   |
 | Email Notifications          |                   |
-| Admin API                    |                   |
 | Swagger UI                   |                   |
 
 ---
@@ -115,11 +114,11 @@ Các endpoints chính:
 
 Vấn đề: Nhiều người cùng mua last variant gây overselling.
 
-Giải pháp 3 lớp:
+Giải pháp 4 lớp:
 
 Lớp 1 - Pessimistic Lock:
 
-- @Lock(LockModeType.PESSIMISTIC_WRITE) tạo câu lệnh SELECT ... FOR UPDATE
+- @Lock(LockModeType.PESSIMISTIC_WRITE) tạo câu lệnh SELECT ... FOR NO KEY UPDATE
 - Row bị khóa trong transaction, các transaction khác phải chờ
 
 Lớp 2 - Soft Reservation:
@@ -129,9 +128,17 @@ Lớp 2 - Soft Reservation:
 - available : stock_quantity - SUM(active_reservations)
 - @Scheduled task dọn dẹp mỗi 60 giây
 
-Lớp 3 - Transaction:
+Lớp 3 - SERIALIZABLE Isolation:
+
+- @Transactional(isolation = Isolation.SERIALIZABLE)
+- Đảm bảo transaction thấy consistent snapshot
+- Giải quyết race condition khi query 2 bảng (product_variants + inventory_reservations)
+- Thread B nhìn thấy reservation của Thread A sau khi A commit
+
+Lớp 4 - Transaction Boundary:
 
 - @Transactional đảm bảo: Lock → Tính toán → Validate → Tạo reservation → Release
+- Atomic operation, rollback nếu có lỗi
 
 ![Sequence Diagram - Last Item Purchase Flow](./images/Sequence_Diagram_Inventory_Locking.png)
 _Hình 2: Sequence Diagram - Ngăn Chặn Race Condition_
@@ -172,8 +179,8 @@ Hoãn lại: SePay Integration (Phase 2 theo yêu cầu).
 
 ### 5.2. Độ Phức Tạp Kỹ Thuật
 
-- Inventory Locking: Nâng cao (SELECT FOR UPDATE + Soft Reservation + Deadlock prevention)
-- Concurrency Control: Nâng cao (Race condition giải quyết bằng 3-layer protection)
+- Inventory Locking: Nâng cao (Pessimistic Lock + SERIALIZABLE Isolation + Soft Reservation + Race condition prevention)
+- Concurrency Control: Nâng cao (4-layer protection giải quyết overselling)
 - System Design: Trung bình (Clean Architecture, SOLID principles)
 - Security: Trung bình (JWT stateless, custom validation)
 
