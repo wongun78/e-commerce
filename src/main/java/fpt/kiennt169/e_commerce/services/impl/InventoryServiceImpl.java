@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -28,7 +29,7 @@ public class InventoryServiceImpl implements InventoryService {
     private int reservationExpiryMinutes;
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void reserveStock(Long variantId, int quantity, String sessionId) {
         log.debug("Reserving stock: variantId={}, quantity={}, sessionId={}", variantId, quantity, sessionId);
 
@@ -37,6 +38,9 @@ public class InventoryServiceImpl implements InventoryService {
 
         int reserved = reservationRepository.getTotalReservedQuantity(variantId);
         int available = variant.getStockQuantity() - reserved;
+
+        log.debug("Stock check: variantId={}, total={}, reserved={}, available={}, requested={}", 
+            variantId, variant.getStockQuantity(), reserved, available, quantity);
 
         if (available < quantity) {
             throw new InsufficientStockException(
@@ -52,7 +56,7 @@ public class InventoryServiceImpl implements InventoryService {
                 .build();
 
         reservationRepository.save(reservation);
-        log.info("Stock reserved: variantId={}, quantity={}", variantId, quantity);
+        log.info("Stock reserved: variantId={}, quantity={}, available after={}", variantId, quantity, available - quantity);
     }
 
     @Override
